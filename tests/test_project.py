@@ -35,4 +35,12 @@ class ProjectTests(unittest.TestCase):
   with tempfile.TemporaryDirectory(dir=ROOT/'tests') as t:
    r=Path(t);self.fixture(r);p=r/'src/node/partitions.csv';p.write_text(p.read_text().replace('0x110000','0x100000'))
    with self.assertRaisesRegex(ValueError,'overlap|Invalid'):parse_layout(p,0x400000)
+ def test_reserved_partition_names_require_correct_types(self):
+  self.api()
+  from esp32_tools.partitions import parse_layout
+  with tempfile.TemporaryDirectory(dir=ROOT/'tests') as t:
+   r=Path(t);self.fixture(r);p=r/'src/node/partitions.csv';original=p.read_text()
+   for change in [('littlefs,data,spiffs','littlefs,app,ota_1'),('otadata,data,ota','otadata,data,nvs')]:
+    p.write_text(original.replace(*change))
+    with self.subTest(change=change),self.assertRaises(ValueError):parse_layout(p,0x400000)
 if __name__=='__main__':unittest.main()

@@ -30,4 +30,20 @@ class FlashGuards(unittest.TestCase):
    r=Path(t);test_project.ProjectTests().fixture(r);e=self.engine(r);image=r/'wrong.bin';image.write_bytes(b'x')
    with patch.object(e,'find_esptool_path',return_value='esptool'),patch.object(e,'get_partitions',return_value={'littlefs':{'offset':'0x210000'}}),patch('esp32_tools.partitions.validate_device') as device,patch.object(e,'run_command') as write:
     self.assertFalse(e.flash_littlefs('CONFIRMED',str(image)));device.assert_not_called();write.assert_not_called()
+ def test_valid_layout_offsets_drive_flash_plan(self):
+  with tempfile.TemporaryDirectory(dir=ROOT/'tests') as t:
+   r=Path(t);test_project.ProjectTests().fixture(r)
+   csv=r/'src/node/partitions.csv'
+   csv.write_text(csv.read_text().replace('0xe000','0xf000').replace('0x10000,','0x20000,').replace('0x110000','0x120000').replace('0x210000','0x220000'))
+   e=self.engine(r);fw=self.artifacts(r,e)
+   with patch.object(e,'find_esptool_path',return_value='esptool'),patch.object(e,'find_boot_app0_path',return_value=str(fw/'boot_app0.bin')),patch('esp32_tools.partitions.validate_device'),patch.object(e,'run_command',return_value=True) as write:
+    self.assertTrue(e.flash_firmware('CONFIRMED',str(fw/'node.ino.bin')))
+    cmd=write.call_args.args[0]
+    self.assertEqual(cmd[cmd.index(str(fw/'node.ino.bin'))-1],'0x20000')
+    self.assertEqual(cmd[cmd.index(str(fw/'boot_app0.bin'))-1],'0xf000')
+ def test_oversized_boot_metadata_rejected_before_device(self):
+  with tempfile.TemporaryDirectory(dir=ROOT/'tests') as t:
+   r=Path(t);test_project.ProjectTests().fixture(r);e=self.engine(r);fw=self.artifacts(r,e);(fw/'boot_app0.bin').write_bytes(bytes(8193))
+   with patch.object(e,'find_esptool_path',return_value='esptool'),patch.object(e,'find_boot_app0_path',return_value=str(fw/'boot_app0.bin')),patch('esp32_tools.partitions.validate_device') as device,patch.object(e,'run_command') as write:
+    self.assertFalse(e.flash_firmware('CONFIRMED',str(fw/'node.ino.bin')));device.assert_not_called();write.assert_not_called()
 if __name__=='__main__':unittest.main()

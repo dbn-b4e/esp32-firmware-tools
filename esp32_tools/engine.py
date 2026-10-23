@@ -1220,8 +1220,14 @@ def flash_firmware(port: str, firmware_path: str, erase_mode: str = "none") -> b
     from .partitions import validate_layout, check_table_matches, validate_device
     try:
         layout = validate_layout(PARTITIONS_CSV)
-        check_table_matches(PARTITIONS_CSV, open(partitions_bin, "rb").read())
-        if os.path.getsize(app_bin) > layout["app0"][3]:
+        check_table_matches(PARTITIONS_CSV, Path(partitions_bin).read_bytes())
+        if not 0 < os.path.getsize(bootloader_bin) <= 0x8000 - int(BUILD_CONFIG['bootloader_offset'], 0):
+            raise ValueError("Bootloader exceeds reserved boot region")
+        if not 0 < os.path.getsize(partitions_bin) <= 0x1000:
+            raise ValueError("Partition table exceeds reserved region")
+        if layout.get('otadata', ())[:2] != ('data', 'ota') or not 0 < os.path.getsize(boot_app0_bin) <= layout['otadata'][3]:
+            raise ValueError("OTA boot metadata exceeds/mismatches otadata partition")
+        if not 0 < os.path.getsize(app_bin) <= layout["app0"][3]:
             raise ValueError("Application exceeds OTA partition")
         validate_device(build_esptool_cmd(esptool, []), port, PARTITIONS_CSV, BUILD_PATH)
     except (ValueError, OSError, subprocess.SubprocessError) as exc:
@@ -1249,16 +1255,16 @@ def flash_firmware(port: str, firmware_path: str, erase_mode: str = "none") -> b
         "--flash-size", "keep",
         BUILD_CONFIG["bootloader_offset"], bootloader_bin,
         "0x8000", partitions_bin,
-        "0xe000", boot_app0_bin,
-        "0x10000", app_bin
+        hex(layout["otadata"][2]), boot_app0_bin,
+        hex(layout["app0"][2]), app_bin
     ]
 
     cmd = build_esptool_cmd(esptool, cmd_args)
 
-    print_color(f"  📍 0x0:     {os.path.basename(bootloader_bin)}", "blue")
+    print_color(f"  📍 {BUILD_CONFIG['bootloader_offset']}: {os.path.basename(bootloader_bin)}", "blue")
     print_color(f"  📍 0x8000:  {os.path.basename(partitions_bin)}", "blue")
-    print_color(f"  📍 0xe000:  boot_app0.bin", "blue")
-    print_color(f"  📍 0x10000: {os.path.basename(app_bin)}", "blue")
+    print_color(f"  📍 {hex(layout['otadata'][2])}: boot_app0.bin", "blue")
+    print_color(f"  📍 {hex(layout['app0'][2])}: {os.path.basename(app_bin)}", "blue")
 
     return run_command(cmd)
 
@@ -2377,7 +2383,7 @@ Les cartes et les options sont declarees dans build-config.json.
             if os.path.exists(bootloader_bin):
                 size = os.path.getsize(bootloader_bin)
                 total_size += size
-                flash_items.append(f"    • 0x0:     bootloader.bin ({size:,} bytes)")
+                flash_items.append(f"    • {BUILD_CONFIG['bootloader_offset']}: bootloader.bin ({size:,} bytes)")
             if os.path.exists(partitions_bin):
                 size = os.path.getsize(partitions_bin)
                 total_size += size
@@ -2392,7 +2398,7 @@ Les cartes et les options sont declarees dans build-config.json.
             if os.path.exists(app_bin):
                 size = os.path.getsize(app_bin)
                 total_size += size
-                flash_items.append(f"    • 0x10000: app.bin ({size:,} bytes)")
+                flash_items.append(f"    • {hex(validate_layout(PARTITIONS_CSV)['app0'][2])}: app.bin ({size:,} bytes)")
 
             if total_size > 0:
                 flash_items.insert(0, f"  ✓ Firmware components (total: {total_size:,} bytes):")
@@ -2437,7 +2443,7 @@ Les cartes et les options sont declarees dans build-config.json.
 
         # Verify if requested
         if args.verify:
-            if not verify_flash_against_binary(port, firmware_file, offset="0x0" if firmware_file.endswith(".merged.bin") else "0x10000"):
+            if not verify_flash_against_binary(port, firmware_file, offset="0x0" if firmware_file.endswith(".merged.bin") else hex(validate_layout(PARTITIONS_CSV)["app0"][2])):
                 sys.exit(1)
 
         # Auto-flash LittleFS if it exists (when using --flash)

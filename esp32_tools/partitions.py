@@ -18,6 +18,10 @@ def parse_layout(path,flash_size):
         require(offset%4096==size%4096==0 and (kind!='app' or offset%65536==0),'Unaligned partition: '+name)
         rows[name]=(kind,subtype,offset,size);end=offset+size
     require('app0' in rows and rows['app0'][:2]==('app','ota_0'),'Application partition app0/ota_0 required')
+    require(rows.get('otadata', ())[:2] == ('data', 'ota') and rows['otadata'][3] >= 0x2000,
+            'OTA boot metadata requires a data/ota partition of at least 8 KiB')
+    if 'littlefs' in rows:
+        require(rows['littlefs'][:2] == ('data', 'spiffs'), 'LittleFS must be a data/spiffs partition')
     return rows
 
 
