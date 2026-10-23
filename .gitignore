@@ -27,3 +27,10 @@ test_*.ota
 .superpowers/
 tmp/
 .venv/
+
+# Credentials and device-specific artifacts
+.env
+.env.*
+*.pem
+*.key
+private-artifacts/
