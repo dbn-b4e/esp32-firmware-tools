@@ -6,6 +6,7 @@ Checks installed arduino-cli libraries against requirements specified in arduino
 """
 
 import os
+from .console import safe_print as print
 import re
 import subprocess
 from typing import Dict, List, Tuple, Optional

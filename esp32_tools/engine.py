@@ -22,6 +22,7 @@ Date: 2025-11-11
 """
 
 import os
+from .console import safe_print as print
 import csv
 import sys
 import argparse
