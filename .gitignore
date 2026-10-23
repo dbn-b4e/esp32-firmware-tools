@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+build/
+tmp/
+*.bin
+*.ota
+*.elf
+*.map
+.DS_Store
