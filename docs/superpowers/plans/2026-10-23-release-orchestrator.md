@@ -58,10 +58,10 @@ Files: release_tools/cli.py, runner.py, build.py ; tests/test_release_cli.py ; e
 ### Task 4 — B4E et validation réelle
 
 Files: B4E release-config.json, tools/ota-profile.json ; docs et README outils ; B4E docs/BUILD.md.
-- [ ] Configurer le profil sans changer le firmware ni le core, checkpoint et tag de validation local explicite.
-- [ ] Compiler réellement ce tag B4E depuis la copie isolée, full + delta depuis archive exacte v1.0.4, verify hors ligne ; aucune action sur carte/HA.
-- [ ] Vérifier docs contre commandes réelles, audit secrets historique + nouveaux fichiers, reviewer indépendant sur l’ensemble et fidélité des gardes OTA ancien/nouveau.
-- [ ] Fixes importants RED→GREEN, suites complètes, publication outils, sous-module B4E épinglé, commits propres.
+- [x] Configurer le profil sans changer le firmware ni le core, checkpoint et tag de validation local explicite.
+- [x] Compiler réellement ce tag B4E depuis la copie isolée, full + delta depuis archive exacte v1.0.4, verify hors ligne ; aucune action sur carte/HA.
+- [x] Vérifier docs contre commandes réelles, audit secrets historique + nouveaux fichiers, reviewer indépendant sur l’ensemble et fidélité des gardes OTA ancien/nouveau.
+- [x] Fixes importants RED→GREEN, suites complètes, publication outils, sous-module B4E épinglé, commits propres.
 
 ## Ledger
 
@@ -83,3 +83,6 @@ Files: B4E release-config.json, tools/ota-profile.json ; docs et README outils ;
 - Autres corrections de provenance avant validation finale : bibliothèque/core séparés dans le rapport ; chemins relatifs des bases/profil résolus depuis le projet même quand le wrapper change de cwd. Régressions ajoutées.
 
 - Final: fix pass complete — 58/58 tests Python communs, 19/19 OTA ; neuf régressions de revue/provenance observées RED→GREEN (dont verify FS autonome), contrôle chemins wrapper ajouté. Aucun finding Important restant à cette étape ; compilation réelle finale relancée après commit.
+
+- Task 4: validation réelle finale complete — code outils 9f136d3, tag B4E v1.0.5/86abe57 exporté, entrée config.h privée et sous-module 6e16099 exact ; 17 bibliothèques réellement compilées, 18 fichiers archivés. Full 1 560 466 octets, delta v1.0.4→v1.0.5 38 844 octets, LittleFS 372 736 octets. verify autonome OK, profil legacy explicitement enregistré, anciens artefacts inchangés. Aucun flash ni action HA/Z2M.
+- Final review gate : tous les findings importants corrigés, aucune mineure différée. Audit historique au commit 9f136d3 : 169 blobs/1 619 853 octets, aucun motif de secret ou artefact privé. Les métadonnées d’auteur publiques restent dans Git.

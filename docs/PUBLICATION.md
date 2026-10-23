@@ -102,3 +102,27 @@ l’identité inchangée. Le contrôle réseau a observé 21 rapports standards 
 zéro rapport malformé `raw` et zéro erreur de configuration sur la fenêtre de
 vérification. La température a continué à évoluer après redémarrage ; aucune
 nouvelle interview n’a été nécessaire pour ce correctif compatible.
+
+
+## Orchestrateur de releases depuis tags
+
+La commande `build.py release plan|build|verify` a été testée avec de vrais Git
+locaux, un projet en sous-dossier, des sous-modules épinglés et des archives ESP
+valides. 58 tests Python communs, 19 tests OTA et 4 tests runtime Z2M passent sur
+Mac. Une revue indépendante a comparé fonction par fonction les anciens scripts
+B4E et la nouvelle orchestration ; les écarts importants de profil de base et
+de validation filesystem ont été reproduits puis corrigés avec des régressions.
+
+La validation réelle finale utilise le code d’outils `9f136d3` et le tag local
+B4E v1.0.5 : compilation en copie isolée, full de 1 560 466 octets, delta depuis
+l’archive exacte v1.0.4 de 38 844 octets, LittleFS de 372 736 octets. Le delta est
+reconstruit exactement et `release verify` contrôle aussi les composants USB,
+le CSV/table de partitions et le filesystem. Aucun déploiement sur carte ou HA
+n’a été réalisé pour ce chantier. Les binaires et logs restent privés.
+
+Le scan d’historique jusqu’au code `9f136d3` couvre 169 blobs (1 619 853 octets),
+sans motif de secret ou artefact privé identifié. Les nouveaux fichiers publics
+contiennent configuration de packaging et tests synthétiques ; les secrets
+restent dans des entrées locales ignorées explicitement déclarées. Le profil
+legacy est une déclaration du contrat connu de l’ancien FW, pas une preuve
+cryptographique déduite rétroactivement de son numéro de version.
