@@ -1,0 +1,2 @@
+# Optional differential OTA dependencies, pinned by the OTA module.
+-r ota/requirements-delta.txt

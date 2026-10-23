@@ -1,4 +1,4 @@
-# ESP32 Zigbee OTA Builder
+# OTA modules — ESP32 firmware tools
 
 Create and inspect full Zigbee OTA containers, or generate a verified differential
 update between two exact ESP32-C6 application binaries.
@@ -21,8 +21,8 @@ commands.
 Python **3.10 or newer** is required.
 
 ```sh
-git clone https://github.com/dbn-b4e/esp32C6-OTA-Builder.git
-cd esp32C6-OTA-Builder
+git clone https://github.com/dbn-b4e/esp32-firmware-tools.git
+cd esp32-firmware-tools/ota
 python3 zigbee_ota_generator.py --help
 ```
 

@@ -15,7 +15,10 @@ from pathlib import Path
 import re
 import struct
 
-from zigbee_ota_generator import build_ota, inspect_ota, require, uint
+if __package__:
+    from .zigbee_ota_generator import build_ota, inspect_ota, require, uint
+else:
+    from zigbee_ota_generator import build_ota, inspect_ota, require, uint
 
 HEADER = struct.Struct('<8s32s6I32s32s')
 ESP_PATCH_MAGIC = 0xFCCDDE10

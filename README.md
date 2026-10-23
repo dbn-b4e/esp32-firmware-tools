@@ -1,7 +1,7 @@
 # ESP32 firmware tools
 
-Moteur Python commun de compilation Arduino ESP32, LittleFS, rapports de build,
-contrôle des bibliothèques et flash USB explicite. Premier utilisateur : B4E.
+Outils Python communs : compilation Arduino ESP32, LittleFS, rapports de build,
+contrôle des bibliothèques, flash USB et génération/vérification OTA full/diff. Premier utilisateur : B4E.
 SxS est un projet figé et n'utilise pas ce dépôt.
 
 Le projet firmware conserve son `build.py` et `build-config.json`, puis référence
@@ -47,8 +47,29 @@ ou Windows dans ce lot. La CI exécute les tests CLI sous macOS, Linux et Window
 avec Python 3.10/3.13. Les tests couvrent notamment suffixe `.exe`, espaces et résolution
 par les propriétés Arduino, sans chemins Mac codés en dur.
 
-Hors de ce premier lot : génération OTA (dépôt esp32C6-OTA-Builder), sélection
-Git de tags, installation de cartes custom et interface Qt.
+## OTA : modules autonomes dans ce même dépôt
+
+Le contenu de l’ancien dépôt esp32C6-OTA-Builder est intégré dans `ota/`, avec
+historique et licences. Ce dossier n’est pas un sous-module supplémentaire.
+
+```sh
+python3 ota/zigbee_ota_generator.py --help
+python3 ota/delta_ota.py --help
+python3 -m pip install -r requirements-delta.txt  # seulement pour les deltas
+```
+
+Le full nécessite uniquement la bibliothèque standard Python ; le delta utilise
+les versions épinglées de detools/esptool. Les commandes de création et de
+vérification complètes sont dans [le guide OTA](ota/readme.md).
+Le contrat différentiel conserve son enveloppe de 128 octets : il exige un
+firmware compatible et ne devient pas le format Zigbee natif Espressif par ce
+rangement. Aucun appareil n’est contacté pour générer ou vérifier les fichiers.
+
+Tests OTA : depuis `ota/`, `python3 -m unittest discover -s tests -v`.
+La CI exécute les deux suites sur les six combinaisons OS/Python.
+
+Restent à réaliser : sélection Git de tags pour compiler les firmwares,
+installation de cartes custom et interface Qt.
 
 Le CLI lance un processus neuf par invocation et sélectionne un seul projet.
 Ne pas importer le moteur pour piloter plusieurs projets dans des threads :
