@@ -40,8 +40,8 @@ Python >=3.10 ; un changement vérifié à la fois ; aucun repo/scratch dans /tm
 ### Task 1 — Sources et plan
 
 Files: release_tools/source.py, config.py ; tests/test_release_source.py.
-- [ ] Écrire tests Git réel : tag annoté/léger, dirty checkout ignoré, sous-dossier, sous-module exact, lien/traversée refusés, local_inputs strictement ignorés, version tag/header, sortie confinée/ignorée/existante.
-- [ ] Observer RED, implémenter sélection/export/plan, vérifier GREEN et suite, commit.
+- [x] Écrire tests Git réel : tag annoté/léger, dirty checkout ignoré, sous-dossier, sous-module exact, lien/traversée refusés, local_inputs strictement ignorés, version tag/header, sortie confinée/ignorée/existante.
+- [x] Observer RED, implémenter sélection/export/plan, vérifier GREEN et suite, commit.
 
 ### Task 2 — Archives full et delta
 
@@ -66,3 +66,6 @@ Files: B4E release-config.json, tools/ota-profile.json ; docs et README outils ;
 ## Ledger
 
 - Base outils : 6e16099 ; B4E 4e1ab5e. Choix du snapshot/export et du CLI inline par l’implémentation, pas présentés comme choix utilisateur explicites.
+
+- Task 1: complete — six régressions RED→GREEN ; suite commune 40 tests OK. Git réel, tags annotés, sous-modules épinglés et entrée locale changée couverts.
+- Workspace : worktree persistante dans tmp/release-orchestrator, ignorée ; les outils natifs sont liés au checkout de la tâche WIMEREUX et ne permettent pas de choisir ce dépôt d’outils. Aucun accès infra dans ce chantier.
