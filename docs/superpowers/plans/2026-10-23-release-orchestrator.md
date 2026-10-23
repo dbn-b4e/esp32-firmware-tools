@@ -52,8 +52,8 @@ Files: release_tools/archive.py ; tests/test_release_archive.py.
 ### Task 3 — Orchestration CLI
 
 Files: release_tools/cli.py, runner.py, build.py ; tests/test_release_cli.py ; exemple release-config.json.
-- [ ] Tests CLI dans Git synthétique : plan sans outil Arduino, dispatch, échec sans archive complète, chemin avec espaces, réussite avec processus backend contrôlé puis vrais packages, verify.
-- [ ] Observer RED, implémenter build isolé et publication exclusive, GREEN et suite, commit.
+- [x] Tests CLI dans Git synthétique : plan sans outil Arduino, dispatch, échec sans archive complète, chemin avec espaces, réussite avec processus backend contrôlé puis vrais packages, verify.
+- [x] Observer RED, implémenter build isolé et publication exclusive, GREEN et suite, commit.
 
 ### Task 4 — B4E et validation réelle
 
@@ -71,3 +71,5 @@ Files: B4E release-config.json, tools/ota-profile.json ; docs et README outils ;
 - Workspace : worktree persistante dans tmp/release-orchestrator, ignorée ; les outils natifs sont liés au checkout de la tâche WIMEREUX et ne permettent pas de choisir ce dépôt d’outils. Aucun accès infra dans ce chantier.
 
 - Task 2: complete — quatre tests d’archives RED→GREEN, 44 tests communs OK avec dépendances delta. Full + deltas 3→5/4→5 reconstruits, bases legacy et autoportance contrôlées.
+
+- Task 3: complete — CLI RED→GREEN ; suite commune 47 tests OK. Plan sans Arduino, build contrôlé réel à sa frontière de processus, checkout sale préservé, échec sans manifeste complet et logs privés.
