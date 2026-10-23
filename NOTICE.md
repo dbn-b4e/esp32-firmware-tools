@@ -13,3 +13,14 @@ our full/differential packaging pipeline.
 
 Pinned detools and esptool are installed dependencies, not vendored source.
 The on-device delta decoder is not part of this repository.
+
+
+The generic Z2M descriptor generator and C6 demonstration are independently
+implemented in this repository under MIT. No OpenZigbee source or configuration
+was copied. The Arduino demonstration uses the public Arduino ESP32 3.3.4
+Zigbee API. Its core/library dependencies retain their own upstream licenses.
+
+The JavaScript runtime tests use zigbee-herdsman-converters 26.115.1 and its
+locked npm dependencies as installed dependencies, not vendored source.
+Node is only required for these tests. Serial capture optionally depends on
+pyserial 3.5. Dependencies retain their respective upstream licenses.

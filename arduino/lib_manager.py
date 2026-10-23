@@ -415,9 +415,9 @@ class LibraryManager:
             manifest_path = os.path.join(backup_dir, "library_versions.txt")
             with open(manifest_path, "w") as f:
                 f.write("="*80 + "\n")
-                f.write("SxS-FW Project External Libraries Backup\n")
+                f.write("Arduino Project External Libraries Backup\n")
                 f.write(f"Backup Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                f.write(f"Project: SxS-FW\n")
+                f.write("Project: selected Arduino workspace\n")
                 f.write(f"Total Libraries: {len(user_libs)}\n")
                 f.write("="*80 + "\n\n")
 

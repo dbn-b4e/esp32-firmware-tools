@@ -47,7 +47,7 @@ def validate(value):
         device['firmware_version']=integer(v,0,0xffffffff,'firmware_version') if type(v) is int else text(v,64,'firmware_version')
     require(type(value['ota']) is bool,'ota must be boolean')
     require(isinstance(value['endpoints'],list) and 1<=len(value['endpoints'])<=32,'Expected 1 to 32 endpoints')
-    endpoints=[];ids=set();names=set()
+    endpoints=[];ids=set();names=set();properties=set()
     for ep in value['endpoints']:
         fields(ep,['id','name','clusters','features'],['id','name','clusters','features'],'endpoint')
         number=integer(ep['id'],1,240,'endpoint id');name=text(ep['name'],32,'endpoint name',True)
@@ -67,6 +67,9 @@ def validate(value):
             item={'type':kind}
             if kind=='binary_input':item['property']=text(f.get('property','state'),32,'binary property',True)
             else:require('property' not in f,'Property override is supported only for binary_input')
+            base=item['property'] if kind=='binary_input' else {'on_off':'state','temperature':'temperature','humidity':'humidity'}[kind]
+            prop=base+'_'+name
+            require(prop not in properties,'Duplicate final property: '+prop);properties.add(prop)
             if 'reporting' in f:
                 require(kind!='on_off','on_off uses standard Z2M reporting')
                 r=f['reporting'];fields(r,['min','max','change'],['min','max','change'],'reporting')

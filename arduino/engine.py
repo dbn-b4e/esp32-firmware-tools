@@ -963,7 +963,7 @@ def generate_build_log(build_output: str, firmware_path: str = None) -> str:
     # Build log content
     log = []
     log.append("=" * 80)
-    log.append("SxS ESP32-C6 FIRMWARE BUILD LOG")
+    log.append("ESP32 FIRMWARE BUILD LOG")
     log.append("=" * 80)
     log.append("")
 

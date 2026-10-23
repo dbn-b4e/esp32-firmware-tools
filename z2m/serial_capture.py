@@ -31,7 +31,7 @@ def capture_descriptor(port,baud=115200,timeout=15):
     require(isinstance(timeout,(int,float)) and 1<=timeout<=120,'Capture timeout must be 1 to 120 seconds')
     try:import serial
     except ImportError as e:raise ValueError('Serial capture requires pyserial; see z2m/requirements-serial.txt') from e
-    connection=serial.Serial();connection.port=port;connection.baudrate=baud;connection.timeout=.2
+    connection=serial.Serial();connection.port=port;connection.baudrate=baud;connection.timeout=.2;connection.write_timeout=.5
     connection.dtr=False;connection.rts=False
     try:
         connection.open()

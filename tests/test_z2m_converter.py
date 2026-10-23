@@ -37,6 +37,16 @@ class ConverterTests(unittest.TestCase):
   for cluster in (1026,0xfc00):
    d=descriptor();d['endpoints'][0]['clusters']['input'].append(cluster)
    with self.subTest(cluster=cluster),self.assertRaises(ValueError):a.generate(d)
+ def test_final_property_collisions_rejected(self):
+  a=self.api();d=descriptor()
+  d['endpoints'][0]['clusters']['input'].append(15)
+  d['endpoints'][0]['features'].append({'type':'binary_input'})
+  with self.assertRaisesRegex(ValueError,'property'):a.validate(d)
+  d=descriptor();d['endpoints'][0]['name']='x_y'
+  d['endpoints'][0]['clusters']['input']=[15]
+  d['endpoints'][0]['features']=[{'type':'binary_input','property':'foo'}]
+  d['endpoints'][1]['name']='y';d['endpoints'][1]['features'][0]['property']='foo_x'
+  with self.assertRaisesRegex(ValueError,'property'):a.validate(d)
  def test_strings_are_encoded_as_data(self):
   a=self.api();d=descriptor();payload='quote"; globalThis.injected=true; //'
   d['device']['description']=payload
