@@ -176,6 +176,19 @@ class DeltaTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'reconstruct|Reconstruct'):
                 api.verify_delta(output, base, target, profile)
 
+    def test_reconstruction_stops_at_declared_target_size(self):
+        import detools
+        api = self.api()
+        base = bytes(range(256))*16
+        target = base + b'end'
+        hostile_target = target + b'x'*100000
+        raw = io.BytesIO()
+        detools.create_patch(io.BytesIO(base), io.BytesIO(hostile_target), raw, compression='heatshrink')
+        official = struct.pack('<I', 0xfccdde10) + bytes(32) + bytes(28) + raw.getvalue()
+        payload = api.envelope(base, target, 3, 5, official, self.profile())
+        with self.assertRaisesRegex(ValueError, 'exceeds expected target size'):
+            api.reconstruct(base, payload)
+
     def test_generic_envelope_matches_original_b4e_layout(self):
         import detools
         api = self.api()

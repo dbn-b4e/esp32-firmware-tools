@@ -118,7 +118,16 @@ def validate_images(base, target, base_version, version, profile):
 
 def reconstruct(base, payload):
     import detools
-    result = io.BytesIO()
+    require(len(payload) >= 193, 'Truncated delta')
+    target_size = struct.unpack_from('<I', payload, 52)[0]
+
+    class BoundedOutput(io.BytesIO):
+        def write(self, data):
+            require(self.tell() + len(data) <= target_size,
+                    'Reconstructed application exceeds expected target size')
+            return super().write(data)
+
+    result = BoundedOutput()
     try:
         detools.apply_patch(io.BytesIO(base), io.BytesIO(payload[192:]), result)
     except Exception as error:
