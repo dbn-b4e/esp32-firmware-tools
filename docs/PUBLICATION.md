@@ -58,7 +58,7 @@ zigbee-herdsman-converters, pas un substitut de son API.
 
 ## Validation et limites
 
-33 tests Python communs, 19 OTA et 4 tests runtime JavaScript passent sur Mac.
+34 tests Python communs, 19 OTA et 4 tests runtime JavaScript passent sur Mac.
 L’exemple compile réellement avec le core Arduino 3.3.4. Le header C++ du FW est
 exécuté sur hôte pour vérifier l’export et le convertisseur archivés. B4E est
 recompilé et testé séparément avec son sous-module et sa politique locale.
@@ -69,7 +69,8 @@ Un flash USB physique et une capture `describe` ont ensuite été vérifiés sur
 le JSON réel et son convertisseur sont identiques aux snapshots testés. Le
 changement de modèle depuis B4E a révélé un crash lié aux anciens enregistrements
 Zigbee, supprimé après effacement explicite du seul stockage Zigbee sauvegardé.
-L’appairage et les entrées/sorties physiques ne sont pas encore validés. Le SDK
+L’appairage et les remontées ont ensuite été validés, comme détaillé plus bas ;
+les essais prolongés de reconnexion et après coupure restent à réaliser. Le SDK
 Arduino utilise des drapeaux de connexion ordinaires qui ne constituent pas une
 preuve de liaison en direct. L’exemple ne doit pas servir de watchdog de
 sécurité ou de système de commande de chaudière sans conception complémentaire.
@@ -79,3 +80,25 @@ Un descriptif futur peut contenir un libellé privé choisi par son auteur ; il
 faut inspecter le JSON avant de le publier. Les hashes OTA vérifient l’intégrité,
 pas une signature cryptographique. La génération de fichiers n’autorise pas un
 déploiement automatique sur HA, Z2M ou une carte en production.
+
+
+## Validation du générateur sur le réseau Zigbee
+
+Après rétablissement de l’alimentation du coordinateur et autorisation
+utilisateur, le convertisseur `c6-tools-demo.mjs` a été chargé à chaud et une
+nouvelle interview a été exécutée sur le seul C6 de test. Z2M a confirmé le
+modèle `C6-TOOLS-DEMO`, le fabricant `Example` et les endpoints 10/20/30.
+La température simulée a évolué, BOOT a été observé dans ses deux états et la
+sortie LED à ON. L’ancienne fiche avait conservé les endpoints B4E car l’adresse
+IEEE matérielle restait identique ; une nouvelle interview était indispensable.
+
+Le test réseau a aussi révélé des rapports manuels malformés issus des requêtes
+partiellement initialisées du core Arduino 3.3.4. Le correctif 1.0.1 est local à
+l’exemple et ne modifie aucune bibliothèque Arduino installée globalement.
+
+
+Après flash de la correction 1.0.1, `describe` a confirmé la version réelle et
+l’identité inchangée. Le contrôle réseau a observé 21 rapports standards valides,
+zéro rapport malformé `raw` et zéro erreur de configuration sur la fenêtre de
+vérification. La température a continué à évoluer après redémarrage ; aucune
+nouvelle interview n’a été nécessaire pour ce correctif compatible.

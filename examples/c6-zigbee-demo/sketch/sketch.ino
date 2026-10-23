@@ -7,6 +7,7 @@
 #include <atomic>
 #include "board_config.h"
 #include "descriptor.h"
+#include "reporting.h"
 
 ZigbeeLight led(demo::kFeatures[0].endpoint);
 ZigbeeBinary boot(demo::kFeatures[1].endpoint);
@@ -48,11 +49,11 @@ void applicationTask(void*){
   if(online && reportingReady.load()){
    bool first=!wasConnected;
    if(first || (bootDirty && uint32_t(now-lastBoot)>=1000) || uint32_t(now-lastBoot)>=30000){
-    lastBoot=now;bool set=boot.setBinaryInput(stable);bool sent=boot.reportBinaryInput();bootDirty=!(set&&sent);
+    lastBoot=now;bool set=boot.setBinaryInput(stable);bool sent=demo::reportStandardAttribute(demo::kFeatures[1].endpoint,ESP_ZB_ZCL_CLUSTER_ID_BINARY_INPUT,ESP_ZB_ZCL_ATTR_BINARY_INPUT_PRESENT_VALUE_ID);bootDirty=!(set&&sent);
    }
    if(first || uint32_t(now-lastTemp)>=5000){
     lastTemp=now;int value=2000+int(phase<=50?phase:100-phase)*10;phase=(phase+1)%100;
-    temperatureCenti.store(value);temperature.setTemperature(value/100.0f);temperature.reportTemperature();
+    temperatureCenti.store(value);temperature.setTemperature(value/100.0f);demo::reportStandardAttribute(demo::kFeatures[2].endpoint,ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT,ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID);
    }
   }
   wasConnected=online;vTaskDelay(pdMS_TO_TICKS(10));

@@ -4,7 +4,7 @@
     "model": "C6-TOOLS-DEMO",
     "manufacturer": "Example",
     "description": "BOOT input, LED output and simulated temperature",
-    "firmware_version": 65536
+    "firmware_version": 65537
   },
   "ota": false,
   "endpoints": [

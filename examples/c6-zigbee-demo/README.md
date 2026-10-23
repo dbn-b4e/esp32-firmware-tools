@@ -149,11 +149,28 @@ capture `describe` réussie sur ESP32-C6 : le JSON réel et le `.mjs` produit so
 identiques aux snapshots testés. Le démarrage a nécessité la migration explicite
 du stockage Zigbee décrite plus haut. Aucun changement HA/Z2M n’a été effectué.
 
-Restent à vérifier physiquement : brochage/LED, appui réel, nouvel appairage,
-reporting, reconnexion et comportement après coupure. La CI et la console ne
-remplacent pas ces tests avec le coordinateur.
+L’interview et la configuration Z2M ont ensuite été validées, après autorisation
+utilisateur de charger le convertisseur et d’interviewer ce seul appareil.
+Le réseau a montré BOOT false/true, la LED à ON et la température évolutive.
+Restent notamment l’observation visuelle de la LED et les tests prolongés de
+reconnexion et après coupure. Une console active ne prouve pas ces propriétés.
 
 Si la LED ne s’allume pas, contrôler le brochage, active LOW et type de LED.
 Si le convertisseur ne charge pas, vérifier autorisation JS externe et version
 modernExtend. Si l’appareil reste non supporté, comparer son identité et ses
 clusters réels au JSON ; ne pas élargir le fingerprint pour masquer un écart.
+
+
+## Reporting et compatibilité Arduino 3.3.4
+
+Dans le core 3.3.4, `ZigbeeTempSensor::reportTemperature()` et
+`ZigbeeBinary::reportBinaryInput()` créent une requête ZCL sans initialiser tous
+ses champs, dont les bits `manuf_specific`. Sur la cible, certains rapports
+manuels contenaient un en-tête malformé et étaient reçus comme `raw` par Z2M,
+alors que le reporting automatique et les lectures pouvaient encore fonctionner.
+
+L’exemple 1.0.1 utilise son propre helper `sketch/reporting.h` : requête entièrement
+initialisée, attribut standard sans extension fabricant et verrou Zigbee conservé.
+Le core Arduino global reste intact. Le test natif exécute ce helper aux limites
+du SDK et vérifie les champs, le verrou et la propagation d’un échec d’envoi.
+Cette correction conserve modèle, endpoints, convertisseur et association.

@@ -154,8 +154,9 @@ Le log horodaté précise les commandes et bibliothèques réellement utilisées
 
 Le [guide de l’exemple](examples/c6-zigbee-demo/README.md) explique le brochage,
 les trois endpoints, l’installation du convertisseur et les manipulations HA.
-Le flash USB et l’export `describe` sont validés sur C6. L’appairage et les
-manipulations Zigbee restent à vérifier. Changer de modèle/endpoints peut exiger
+Le flash USB, l’export `describe`, l’interview et la configuration Z2M sont
+validés sur C6. BOOT a été observé dans ses deux états et la température évolue.
+Les tests prolongés de reconnexion et après coupure restent à compléter. Changer de modèle/endpoints peut exiger
 une migration explicite du stockage Zigbee : voir le guide de l’exemple.
 
 ## Intégrer les outils à son propre firmware
