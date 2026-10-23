@@ -4,6 +4,13 @@ Outils Python communs : compilation Arduino ESP32, LittleFS, rapports de build,
 contrôle des bibliothèques, flash USB et génération/vérification OTA full/diff. Premier utilisateur : B4E.
 SxS est un projet figé et n'utilise pas ce dépôt.
 
+```text
+esp32-firmware-tools/
+├── build.py           # lanceur de compilation pour un projet choisi
+├── esp32_tools/       # moteur Arduino, LittleFS, flash et contrôles
+└── ota/               # générateurs/vérificateurs full et différentiels
+```
+
 Le projet firmware conserve son `build.py` et `build-config.json`, puis référence
 ce dépôt comme sous-module Git à un commit précis. Le moteur ne contient aucun
 firmware, secret ou réglage réseau. Python >= 3.10, Arduino CLI et `requests`
