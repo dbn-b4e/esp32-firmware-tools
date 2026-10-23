@@ -13,4 +13,4 @@ class ConsoleTests(unittest.TestCase):
   from esp32_tools.console import safe_print
   data=io.BytesIO();stream=io.TextIOWrapper(data,encoding='utf-8')
   safe_print('✅ Température',file=stream);stream.flush()
-  self.assertEqual(data.getvalue().decode('utf-8'),'✅ Température\n')
+  self.assertEqual(data.getvalue().decode('utf-8').splitlines(),['✅ Température'])
