@@ -74,7 +74,8 @@ def inspect_ota(data):
         require(offset + size <= len(data), 'Truncated subelement payload')
         elements.append((tag, data[offset:offset + size]))
         offset += size
-    require(sum(tag == 0 and bool(body) for tag, body in elements) == 1,
+    upgrades = [body for tag, body in elements if tag == 0]
+    require(len(upgrades) == 1 and bool(upgrades[0]),
             'Exactly one nonempty upgrade-image subelement required')
     return dict(manufacturer_code=manufacturer, image_type=kind, file_version=file_version,
                 stack_version=stack, header_string=label, hardware=hardware,

@@ -55,6 +55,15 @@ class FullOTATests(unittest.TestCase):
                     struct.pack_into(fmt, bad, offset, value)
                     self.assertFalse(self.parse(bad, Path(tmp)))
 
+    def test_rejects_empty_duplicate_upgrade_element(self):
+        with tempfile.TemporaryDirectory(dir='tmp') as tmp:
+            _, data = self.generate(Path(tmp), True)
+            for offset in (60, len(data)):
+                bad = bytearray(data[:offset] + struct.pack('<HI', 0, 0) + data[offset:])
+                struct.pack_into('<I', bad, 52, len(bad))
+                with self.subTest(offset=offset):
+                    self.assertFalse(self.parse(bad, Path(tmp)))
+
     def test_refuses_existing_output(self):
         with tempfile.TemporaryDirectory(dir='tmp') as tmp:
             args, data = self.generate(Path(tmp), True)
