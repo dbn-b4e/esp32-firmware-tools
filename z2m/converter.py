@@ -143,8 +143,17 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__);sub=parser.add_subparsers(dest='command',required=True)
     p=sub.add_parser('generate');p.add_argument('--input',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--force',action='store_true')
     p=sub.add_parser('validate');p.add_argument('--input',type=Path,required=True)
+    p=sub.add_parser('capture');p.add_argument('--port',required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--baud',type=int,default=115200);p.add_argument('--timeout',type=float,default=15);p.add_argument('--force',action='store_true')
     args=parser.parse_args()
     try:
+        if args.command=='capture':
+            require(not args.output.is_symlink(),'Output symlinks are refused')
+            require(args.force or not args.output.exists(),'Output already exists')
+            from z2m.serial_capture import capture_descriptor
+            d=capture_descriptor(args.port,args.baud,args.timeout)
+            write_output(args.output,json.dumps(d,indent=2,ensure_ascii=True)+'\n',args.force)
+            print('Captured firmware descriptor:',args.output)
+            return
         d=load_descriptor(args.input)
         if args.command=='generate':write_output(args.output,generate(d),args.force,args.input);print('Generated:',args.output)
         else:print('Descriptor valid:',d['device']['model'],';',len(d['endpoints']),'endpoints')

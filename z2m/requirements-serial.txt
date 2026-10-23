@@ -1,0 +1,2 @@
+# Optional; JSON validation/generation does not require this dependency.
+pyserial==3.5
