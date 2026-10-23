@@ -5,7 +5,7 @@ Works with any Arduino project - auto-discovers libraries from Arduino's officia
 """
 
 import os
-from .console import safe_print as print
+from common.console import safe_print as print
 import json
 import re
 import subprocess

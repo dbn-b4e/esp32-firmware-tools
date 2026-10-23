@@ -7,9 +7,13 @@ SxS est un projet figé et n'utilise pas ce dépôt.
 ```text
 esp32-firmware-tools/
 ├── build.py           # lanceur de compilation pour un projet choisi
-├── esp32_tools/       # moteur Arduino, LittleFS, flash et contrôles
+├── arduino/           # moteur Arduino, LittleFS, flash et contrôles
+├── common/            # utilitaires indépendants du compilateur
 └── ota/               # générateurs/vérificateurs full et différentiels
 ```
+
+Le lanceur racine appelle actuellement le backend Arduino ; aucun backend
+ESP-IDF ou PlatformIO n’est encore fourni.
 
 Le projet firmware conserve son `build.py` et `build-config.json`, puis référence
 ce dépôt comme sous-module Git à un commit précis. Le moteur ne contient aucun
@@ -45,8 +49,9 @@ validate_device(esptool_command,port,csv_path,workdir,check_partition).
 La politique B4E conserve ses contrôles exacts de partitions et de copie Zigbee.
 
 Le moteur de build/rapports/gestion des bibliothèques est extrait du dépôt
-B4E (base `bd707ec`, auteur David Baldwin / B4E). Les modules project, partitions
-et arduino séparent configuration, politiques et découverte des outils.
+B4E (base `bd707ec`, auteur David Baldwin / B4E). Les modules `arduino/project.py`, `arduino/partitions.py` et
+`arduino/toolchain.py` séparent configuration, politiques et découverte des
+outils Arduino. `common/console.py` reste indépendant du compilateur.
 
 Validation : `python3 -m unittest discover -s tests -v`.
 Compilation Arduino réelle B4E validée sur Mac uniquement ; aucun flash Linux

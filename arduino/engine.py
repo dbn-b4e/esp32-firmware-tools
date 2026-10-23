@@ -22,7 +22,7 @@ Date: 2025-11-11
 """
 
 import os
-from .console import safe_print as print
+from common.console import safe_print as print
 import csv
 import sys
 import argparse
@@ -294,7 +294,7 @@ def get_port_with_confirmation() -> Optional[str]:
 
 
 def find_esptool_path() -> Optional[str]:
-    from .arduino import selected_tool
+    from .toolchain import selected_tool
     return selected_tool('esptool_py')
 
 
@@ -314,7 +314,7 @@ def build_esptool_cmd(esptool_path: str, args: list) -> list:
 
 
 def find_boot_app0_path() -> Optional[str]:
-    from .arduino import selected_boot_app0
+    from .toolchain import selected_boot_app0
     return selected_boot_app0()
 
 
@@ -1271,7 +1271,7 @@ def flash_firmware(port: str, firmware_path: str, erase_mode: str = "none") -> b
 
 
 def find_mklittlefs_path() -> Optional[str]:
-    from .arduino import selected_tool
+    from .toolchain import selected_tool
     return selected_tool('mklittlefs')
 
 

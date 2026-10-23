@@ -13,10 +13,10 @@ def main():
     os.environ['ESP32_BUILD_PROJECT']=str(args.project.resolve())
     sys.argv=[sys.argv[0],*rest]
     try:
-        from esp32_tools.project import current, project_path
+        from arduino.project import current, project_path
         root, config = current()
         os.chdir(project_path(root, config['paths']['sketch']))
-        from esp32_tools.engine import main as engine
+        from arduino.engine import main as engine
         return engine()
     except (ValueError,OSError,KeyError) as exc:
         print(f'Build refused: {exc}',file=sys.stderr)

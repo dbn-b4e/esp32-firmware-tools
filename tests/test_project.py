@@ -3,8 +3,8 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 class ProjectTests(unittest.TestCase):
  def api(self):
-  self.assertIsNotNone(importlib.util.find_spec('esp32_tools'),'Shared engine package missing')
-  from esp32_tools import project
+  self.assertIsNotNone(importlib.util.find_spec('arduino'),'Shared engine package missing')
+  from arduino import project
   return project
  def fixture(self,root):
   (root/'src/node').mkdir(parents=True)
@@ -31,13 +31,13 @@ class ProjectTests(unittest.TestCase):
     with self.subTest(key=k),self.assertRaises(ValueError):a.load_config(r)
  def test_overlapping_partitions_rejected(self):
   self.api()
-  from esp32_tools.partitions import parse_layout
+  from arduino.partitions import parse_layout
   with tempfile.TemporaryDirectory(dir=ROOT/'tests') as t:
    r=Path(t);self.fixture(r);p=r/'src/node/partitions.csv';p.write_text(p.read_text().replace('0x110000','0x100000'))
    with self.assertRaisesRegex(ValueError,'overlap|Invalid'):parse_layout(p,0x400000)
  def test_reserved_partition_names_require_correct_types(self):
   self.api()
-  from esp32_tools.partitions import parse_layout
+  from arduino.partitions import parse_layout
   with tempfile.TemporaryDirectory(dir=ROOT/'tests') as t:
    r=Path(t);self.fixture(r);p=r/'src/node/partitions.csv';original=p.read_text()
    for change in [('littlefs,data,spiffs','littlefs,app,ota_1'),('otadata,data,ota','otadata,data,nvs')]:

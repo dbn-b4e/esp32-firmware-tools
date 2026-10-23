@@ -3,8 +3,8 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 class ArduinoPaths(unittest.TestCase):
  def api(self):
-  self.assertIsNotNone(importlib.util.find_spec('esp32_tools.arduino'),'Selected-core tool resolver missing')
-  from esp32_tools import arduino
+  self.assertIsNotNone(importlib.util.find_spec('arduino.toolchain'),'Selected-core tool resolver missing')
+  from arduino import toolchain as arduino
   return arduino
  def test_selected_core_and_tools_with_spaces(self):
   a=self.api()

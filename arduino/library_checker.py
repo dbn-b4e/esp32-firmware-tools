@@ -6,7 +6,7 @@ Checks installed arduino-cli libraries against requirements specified in arduino
 """
 
 import os
-from .console import safe_print as print
+from common.console import safe_print as print
 import re
 import subprocess
 from typing import Dict, List, Tuple, Optional
@@ -137,7 +137,7 @@ def get_core_libraries() -> Dict[str, str]:
     """
     libraries = {}
 
-    from .arduino import build_properties
+    from .toolchain import build_properties
     core_libs_dir = os.path.join(build_properties()['runtime.platform.path'], 'libraries')
     try:
         # Scan each library directory
