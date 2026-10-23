@@ -8,3 +8,5 @@ tmp/
 *.elf
 *.map
 .DS_Store
+
+node_modules/
