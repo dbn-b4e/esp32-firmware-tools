@@ -42,8 +42,9 @@ B4E (base `bd707ec`, auteur David Baldwin / B4E). Les modules project, partition
 et arduino séparent configuration, politiques et découverte des outils.
 
 Validation : `python3 -m unittest discover -s tests -v`.
-Mac testé par compilation réelle B4E ; Linux/Windows ne sont pas encore validés
-sur machine. Les tests couvrent notamment suffixe `.exe`, espaces et résolution
+Compilation Arduino réelle B4E validée sur Mac uniquement ; aucun flash Linux
+ou Windows dans ce lot. La CI exécute les tests CLI sous macOS, Linux et Windows
+avec Python 3.10/3.13. Les tests couvrent notamment suffixe `.exe`, espaces et résolution
 par les propriétés Arduino, sans chemins Mac codés en dur.
 
 Hors de ce premier lot : génération OTA (dépôt esp32C6-OTA-Builder), sélection
