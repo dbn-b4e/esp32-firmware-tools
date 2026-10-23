@@ -50,8 +50,20 @@ Cette opération remplace le programme et les métadonnées de boot. Utiliser un
 carte de test dédiée ; ne pas remplacer un firmware B4E en service pour essayer
 cet exemple. L’exemple ne possède ni client OTA ni effacement Zigbee automatique.
 Une association existante est conservée ; un long appui BOOT ne fait pas de
-factory reset. Un appareil associé à un autre réseau demande une procédure de
-réinitialisation explicite, hors de ce petit exemple.
+factory reset. **Changer de modèle ou d’endpoints n’est pas une simple mise à
+jour compatible** : les enregistrements de reporting persistants de l’ancien
+FW peuvent référencer des attributs absents et faire planter la pile Zigbee.
+Ce cas a été reproduit en remplaçant B4E par cet exemple sur la carte de test.
+
+Pour migrer entre ces modèles, sauvegarder la flash complète puis réinitialiser
+explicitement le stockage Zigbee local, et prévoir un nouvel appairage/interview
+Z2M. Sur le layout **exact de cet exemple seulement**, `zb_storage` est la région
+`0x3EB000` de taille `0x4000`. Son effacement USB a supprimé le crash reproduit.
+Il supprime l’association et les données réseau Zigbee locales ; il n’est pas
+exécuté automatiquement par `build.py` ou par le FW. Ne pas effacer NVS, FS ou
+la flash entière pour contourner ce problème. Sur une carte déjà enregistrée
+par Z2M, traiter son ancienne identité avant de la réutiliser sous un autre
+modèle, avec accord explicite pour les opérations sur cette installation.
 
 ## Générer le convertisseur depuis le FW
 
@@ -132,9 +144,14 @@ affiche la température simulée locale, pas un accusé de réception du coordin
 
 Vérifié : compilation réelle C6 sur Mac, export du header C++ exécuté sur hôte,
 validation JSON, génération déterministe et exécution des converters avec la
-vraie bibliothèque Z2M verrouillée. **Pas encore vérifié sur une carte flashée** :
-brochage/LED, appui réel, association, reporting, reconnexion et comportement
-après coupure. La CI ne remplace pas ces tests physiques.
+vraie bibliothèque Z2M verrouillée. Le 23 octobre 2026, flash USB physique puis
+capture `describe` réussie sur ESP32-C6 : le JSON réel et le `.mjs` produit sont
+identiques aux snapshots testés. Le démarrage a nécessité la migration explicite
+du stockage Zigbee décrite plus haut. Aucun changement HA/Z2M n’a été effectué.
+
+Restent à vérifier physiquement : brochage/LED, appui réel, nouvel appairage,
+reporting, reconnexion et comportement après coupure. La CI et la console ne
+remplacent pas ces tests avec le coordinateur.
 
 Si la LED ne s’allume pas, contrôler le brochage, active LOW et type de LED.
 Si le convertisseur ne charge pas, vérifier autorisation JS externe et version

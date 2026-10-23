@@ -65,7 +65,11 @@ recompilé et testé séparément avec son sous-module et sa politique locale.
 La CI exécute les suites Python sur Linux/macOS/Windows et Python 3.10/3.13,
 ainsi que le runtime JavaScript sur Node 22/24.
 
-Le démonstrateur n’est pas encore validé après flash/appairage physique. Le SDK
+Un flash USB physique et une capture `describe` ont ensuite été vérifiés sur C6 :
+le JSON réel et son convertisseur sont identiques aux snapshots testés. Le
+changement de modèle depuis B4E a révélé un crash lié aux anciens enregistrements
+Zigbee, supprimé après effacement explicite du seul stockage Zigbee sauvegardé.
+L’appairage et les entrées/sorties physiques ne sont pas encore validés. Le SDK
 Arduino utilise des drapeaux de connexion ordinaires qui ne constituent pas une
 preuve de liaison en direct. L’exemple ne doit pas servir de watchdog de
 sécurité ou de système de commande de chaudière sans conception complémentaire.
