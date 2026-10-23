@@ -73,3 +73,13 @@ Files: B4E release-config.json, tools/ota-profile.json ; docs et README outils ;
 - Task 2: complete — quatre tests d’archives RED→GREEN, 44 tests communs OK avec dépendances delta. Full + deltas 3→5/4→5 reconstruits, bases legacy et autoportance contrôlées.
 
 - Task 3: complete — CLI RED→GREEN ; suite commune 47 tests OK. Plan sans Arduino, build contrôlé réel à sa frontière de processus, checkout sale préservé, échec sans manifeste complet et logs privés.
+
+- Final review: revue indépendante release_orchestrator_review, base 5565b01..39d878e, fidélité comparée aux trois anciens scripts B4E et à ota/delta_ota.py. Aucun Critical ; deux Important reproduits (profil de base, FS), deux Minor reclassés Important pour la traçabilité du tag et le contrat d’inputs privés, plus contrôle pré/post des entrées critiques ajouté.
+- Final: fixed profil de base/legacy — test_different_base_decoder_protocol_is_refused et test_legacy_base_requires_explicit_decoder_profile RED→GREEN ; déclaration --legacy-base-profile pour anciens formats, profils exacts et déclaration enregistrés.
+- Final: fixed LittleFS/composants — création et verify autonome contrôlent CSV/table, taille FS, bootloader et merged ; régressions mauvais FS et table et hashes recalculés RED→GREEN. Manifeste FS legacy contrôlé si présent.
+- Final: fixed tag concurrent/input suivi/version modifiée — trois régressions RED→GREEN. Capture de l’objet du tag unique, refus ls-files sur entrée locale, hash pré/post de version/CSV/exigences/profil/configuration.
+- Task 4: Ruling: full générique sans profil delta conserve la validation du conteneur, pas la certification d’une image ESP — cohérent avec le builder full existant et les autres ESP32 ; coût si mal compris : un utilisateur peut emballer un binaire inadapté. B4E exige son profil C6 et marqueur/digest stricts ; limite documentée.
+- Task 4: Ruling: legacy sans profil enregistré nécessite une attestation explicite du contrat ancien — on ne déduit pas un décodeur depuis une version. Coût si déclaration erronée : le firmware refusera ou ne saura pas décoder ; documentation et profil B4E comparé au contrat existant couvrent le cas testé.
+- Autres corrections de provenance avant validation finale : bibliothèque/core séparés dans le rapport ; chemins relatifs des bases/profil résolus depuis le projet même quand le wrapper change de cwd. Régressions ajoutées.
+
+- Final: fix pass complete — 58/58 tests Python communs, 19/19 OTA ; neuf régressions de revue/provenance observées RED→GREEN (dont verify FS autonome), contrôle chemins wrapper ajouté. Aucun finding Important restant à cette étape ; compilation réelle finale relancée après commit.

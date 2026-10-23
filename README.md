@@ -82,8 +82,10 @@ rangement. Aucun appareil n’est contacté pour générer ou vérifier les fich
 Tests OTA : depuis `ota/`, `python3 -m unittest discover -s tests -v`.
 La CI exécute les deux suites sur les six combinaisons OS/Python.
 
-Restent à réaliser : sélection Git de tags pour compiler les firmwares,
-installation de cartes custom et interface Qt.
+La sélection Git et les archives full/delta sont désormais accessibles par
+`build.py --project CHEMIN release plan|build|verify` : voir
+[le guide des releases](docs/RELEASES.md). Restent l’installation de cartes
+custom et l’interface Qt.
 
 Le CLI lance un processus neuf par invocation et sélectionne un seul projet.
 Ne pas importer le moteur pour piloter plusieurs projets dans des threads :
@@ -289,11 +291,28 @@ Le format différentiel B4E utilise une enveloppe de 128 octets, un en-tête
 Espressif de 64 octets et un patch detools ; ce n’est pas un client delta natif
 universel fourni par Arduino 3.3.4. Le full reste disponible pour un appareil
 qui accepte son format. Compiler un tag Git puis fabriquer ses OTA reste deux
-étapes explicites ; aucun orchestrateur de tags, Qt ou installation de cartes
-custom n’est implémenté.
+étapes orchestrées par la commande `release` ; Qt et installation de cartes
+custom restent à réaliser.
 
 Voir [l’audit de publication](docs/PUBLICATION.md), [LICENSE](LICENSE) et
 [NOTICE.md](NOTICE.md). Le nom et l’adresse d’auteur présents dans l’historique
 Git sont des métadonnées publiques. Les contrôles recherchent les secrets et
 artefacts privés ; ils ne garantissent pas l’absence de toute information
 personnelle ou de toute vulnérabilité future.
+
+
+## Compiler un tag, full et deltas en une commande
+
+```sh
+python3 build.py --project /chemin/projet release plan --ref v1.2.0
+python3 build.py --project /chemin/projet release build --ref v1.2.0 --base-release /chemin/release-exacte-v1.1.0
+python3 build.py --project /chemin/projet release verify --archive build/releases/mon-projet/v1.2.0
+```
+
+Le projet doit avoir commité `release-config.json` avant son tag. La source est
+exportée sans checkout ; les bases proviennent des archives exactes. Les fichiers
+privés sont déclarés explicitement, ignorés par Git et copiés dans le scratch
+privé du projet. Une destination existante est refusée. Voir
+[configuration, garanties et limites](docs/RELEASES.md). Le démonstrateur C6
+fournit une configuration de build seul : son firmware minimal n’a pas de client
+OTA, donc il n’annonce pas un support full/delta qu’il ne possède pas.

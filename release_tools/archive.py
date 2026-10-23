@@ -76,43 +76,83 @@ def verify_full(directory,config,profile=None):
             ota=read(directory,ota_name);inspect_ota(ota)
             require(ota==build_ota(app,file_version=version,**config['full_ota']),'Full OTA identity or payload mismatch')
             require(json_data(read(directory,'z2m-index.json'))==index(config['full_ota'],ota,version,ota_name),'Full index mismatch')
+        if (Path(directory)/'littlefs-manifest.json').exists():
+            fs=json_data(read(directory,'littlefs-manifest.json'))
+            require(isinstance(fs,dict) and set(fs)=={'kind','model','version','size','sha256','fs_file'},'Invalid legacy filesystem manifest')
+            require((fs['kind'],fs['model'],fs['version'])==('filesystem',m['model'],version),'Legacy filesystem model/version mismatch')
+            require(isinstance(fs['fs_file'],str) and Path(fs['fs_file']).name==fs['fs_file'],'Invalid legacy filesystem filename')
+            data=read(directory,fs['fs_file'])
+            require(type(fs['size']) is int and 0<len(data)==fs['size'] and digest(data)==fs['sha256'],'Legacy filesystem size/hash mismatch')
     except (KeyError,TypeError) as e:raise ValueError('Malformed full archive') from e
     return m
 
 
-def load_base(directory,config,profile):
+def load_base(directory,config,profile,legacy_profile=None):
     directory=Path(directory)
     if (directory/'release-manifest.json').exists():
         metadata=verify_release(directory)
         require(metadata['name']==config['name'],'Base release name mismatch')
+        require(metadata.get('delta_profile')==profile.as_json(),'Base decoder profile differs from target profile')
         folder=directory/'full'
-    else:folder=directory
+    else:
+        require(legacy_profile is not None,'A legacy base requires an explicit --legacy-base-profile declaration')
+        require(legacy_profile.as_json()==profile.as_json(),'Declared legacy decoder profile differs from target profile')
+        folder=directory
     m=verify_full(folder,config,profile)
     require(m['version']>=profile.min_base_version,'Base lacks delta support')
     return {'path':str(directory.resolve()),'app':str(inside(folder,m['app_file'])),
             'version':m['version'],'sha256':m['sha256'],'size':m['size']}
 
 
-def check_bases(bases,version,config,profile):
+def check_bases(bases,version,config,profile,legacy_profile=None):
     require(not bases or profile is not None,'Missing delta profile')
     result=[];versions=set()
     for directory in bases:
-        base=load_base(directory,config,profile)
+        base=load_base(directory,config,profile,legacy_profile)
         require(base['version']<version,'Base version must precede the target')
         require(base['version'] not in versions,'Duplicate base version is ambiguous')
         versions.add(base['version']);result.append(base)
     return result
 
 
-def create_deltas(root,image,version,bases,config,profile):
+def create_deltas(root,image,version,bases,config,profile,legacy_profile=None):
     from ota.delta_ota import make_delta
-    checked=check_bases(bases,version,config,profile);result=[]
+    checked=check_bases(bases,version,config,profile,legacy_profile);result=[]
     for base in checked:
         name=f"deltas/from-{base['version']:08x}";directory=inside(root,name)
         make_delta(base['app'],image,base['version'],version,directory,profile)
         write(directory,'base.app.bin',Path(base['app']).read_bytes())
-        result.append({'path':name,'base_version':base['version'],'base_sha256':base['sha256']})
+        result.append({'path':name,'base_version':base['version'],'base_sha256':base['sha256'],'base_profile':profile.as_json()})
     return result
+
+
+def verify_components(root,component,full):
+    from arduino.partitions import parse_layout,flash_size,check_table_rows
+    require(isinstance(component,dict) and set(component)=={'sketch','filesystem_required'},'Invalid component description')
+    stem=component['sketch'];require(isinstance(stem,str) and Path(stem).name==stem and stem.endswith('.ino'),'Invalid component sketch name')
+    require(type(component['filesystem_required']) is bool,'Invalid filesystem requirement')
+    cfg=json_data(read(root,'build/build-config.json'));size=flash_size(cfg)
+    rows=parse_layout(inside(root,'build/partitions.csv'),size)
+    folder=inside(root,'components');fs_name=stem.replace('.ino','-littlefs.bin')
+    fs=inside(folder,fs_name)
+    if fs.exists() or component['filesystem_required']:
+        require('littlefs' in rows and fs.is_file(),'LittleFS image or partition missing')
+        require(len(read(folder,fs_name))==rows['littlefs'][3],'LittleFS size differs from selected partition')
+    boot_name=stem+'.bootloader.bin';table_name=stem+'.partitions.bin';merged_name=stem+'.merged.bin'
+    boot=read(folder,boot_name);table=read(folder,table_name)
+    require(cfg.get('bootloader_offset') in ('0x0','0x1000'),'Invalid bootloader offset')
+    boot_offset=int(cfg['bootloader_offset'],0)
+    require(0<len(boot)<=0x8000-boot_offset,'Bootloader exceeds reserved region')
+    require(0<len(table)<=0x1000,'Compiled partition table exceeds reserved region')
+    check_table_rows(rows,table)
+    app=read(root,'full/'+full['app_file']);require(len(app)<=rows['app0'][3],'Application exceeds selected partition')
+    merged=inside(folder,merged_name)
+    if merged.exists():
+        data=read(folder,merged_name);require(len(data)==size,'Merged image size differs from flash size')
+        for offset,blob in [(boot_offset,boot),(0x8000,table),(rows['app0'][2],app)]:
+            require(data[offset:offset+len(blob)]==blob,'Merged image differs from compiled components')
+    known={boot_name,table_name,merged_name,fs_name}
+    require(all(p.name in known for p in folder.iterdir()),'Unknown compiled component')
 
 
 def inventory(root):
@@ -150,13 +190,18 @@ def verify_release(root):
         require(inventory(root)==m['files'],'Release files missing, added or changed')
         p=delta_profile(encode(m['delta_profile']),config['full_ota']) if m.get('delta_profile') is not None else None
         require(bool(p)==('delta_profile' in config),'Missing/extra release delta profile')
+        if m.get('legacy_base_profile') is not None:
+            require(p is not None and delta_profile(encode(m['legacy_base_profile']),config['full_ota']).as_json()==p.as_json(),'Legacy decoder declaration mismatch')
         full=verify_full(root/'full',config,p);require(full['version']==m['version'],'Release/full version mismatch')
+        if 'components' in m:verify_components(root,m['components'],full)
+        else:require(not any(n.startswith('components/') for n in m['files']),'Components have no semantic description')
         require(isinstance(m['deltas'],list),'Invalid delta inventory')
         versions=set()
         from ota.delta_ota import verify_delta
         for d in m['deltas']:
-            require(isinstance(d,dict) and set(d)=={'path','base_version','base_sha256'},'Invalid delta entry')
+            require(isinstance(d,dict) and set(d)=={'path','base_version','base_sha256','base_profile'},'Invalid delta entry')
             require(p is not None and type(d['base_version']) is int,'Missing delta profile/version')
+            require(d['base_profile']==p.as_json(),'Archived base decoder profile mismatch')
             require(d['path']==f"deltas/from-{d['base_version']:08x}" and d['base_version'] not in versions,'Invalid/duplicate delta path')
             versions.add(d['base_version']);directory=inside(root,d['path'])
             checked=verify_delta(directory,directory/'base.app.bin',root/'full'/full['app_file'],p)

@@ -53,10 +53,15 @@ def decode_table(data):
     require(result,'Invalid device partition table');return result
 
 
-def check_table_matches(csv_path,binary):
+def check_table_rows(rows,binary):
+    """Validate a compiled table against explicit rows, without global project state."""
     subtypes={'nvs':2,'ota':0,'fat':0x81,'spiffs':0x82,'coredump':3,**{f'ota_{i}':0x10+i for i in range(16)}}
-    expected={name:(0 if row[0]=='app' else 1,subtypes[row[1]],row[2],row[3]) for name,row in validate_layout(csv_path).items()}
+    expected={name:(0 if row[0]=='app' else 1,subtypes[row[1]],row[2],row[3]) for name,row in rows.items()}
     require(decode_table(binary)==expected,'Device partition table differs; explicit USB migration required')
+
+
+def check_table_matches(csv_path,binary):
+    check_table_rows(validate_layout(csv_path),binary)
 
 
 def validate_device(esptool_command,port,csv_path,workdir,check_partition=False):

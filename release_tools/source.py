@@ -55,15 +55,17 @@ def tagged_file(repo,commit,name,modules):
     return blob(repo,commit,name)
 
 
-def make_plan(project,ref,output=None,bases=()):
+def make_plan(project,ref,output=None,bases=(),legacy_base_profile=None):
     project=Path(project).resolve()
     repo=Path(os.fsdecode(git(project,'rev-parse','--show-toplevel').stdout).strip()).resolve()
     prefix=project.relative_to(repo).as_posix();prefix='' if prefix=='.' else prefix
     require(isinstance(ref,str) and not ref.startswith('-') and '..' not in ref,'Expected a local Git tag')
     require(git(repo,'check-ref-format','refs/tags/'+ref,check=False).returncode==0,'Invalid tag name')
     tag='refs/tags/'+ref
-    commit=os.fsdecode(git(repo,'rev-parse','--verify',tag+'^{commit}',check=False).stdout).strip()
-    require(re.fullmatch(r'[0-9a-f]{40,64}',commit),'Local tag not found: '+ref)
+    tag_object=os.fsdecode(git(repo,'rev-parse','--verify',tag,check=False).stdout).strip()
+    require(re.fullmatch(r'[0-9a-f]{40,64}',tag_object),'Local tag not found: '+ref)
+    commit=os.fsdecode(git(repo,'rev-parse','--verify',tag_object+'^{commit}',check=False).stdout).strip()
+    require(re.fullmatch(r'[0-9a-f]{40,64}',commit),'Tag does not point to a commit: '+ref)
     modules=submodules(repo,commit)
     def read(name):return tagged_file(repo,commit,'/'.join(x for x in [prefix,relative(name)] if x),modules)
     c=release_config(read('release-config.json'));build=json_data(read('build-config.json'))
@@ -88,6 +90,7 @@ def make_plan(project,ref,output=None,bases=()):
     for name in c['local_inputs']:
         path=inside(project,name)
         require(path.is_file() and ignored(repo,path),'Local input must exist and be ignored: '+name)
+        require(not git(repo,'ls-files','--',path.relative_to(repo).as_posix()).stdout.strip(),'Local input is tracked in the current checkout: '+name)
         selected='/'.join(x for x in [prefix,name] if x)
         tracked=git(repo,'ls-tree','-r','--name-only',commit,'--',selected).stdout.strip()
         require(not tracked,'Local input must not replace tracked source: '+name)
@@ -97,11 +100,18 @@ def make_plan(project,ref,output=None,bases=()):
         require(build.get('chip')=='esp32c6','Differential validation supports ESP32-C6 only')
         profile=delta_profile(read(c['delta_profile']),c['full_ota']).as_json()
     require(not bases or profile is not None,'Base releases require a compatible delta profile')
+    legacy=None
+    if legacy_base_profile is not None:
+        require(profile is not None,'A legacy declaration needs a target delta profile')
+        legacy_path=Path(legacy_base_profile)
+        if not legacy_path.is_absolute():legacy_path=project/legacy_path
+        legacy=delta_profile(legacy_path.read_bytes(),c['full_ota']).as_json()
+        require(legacy==profile,'Declared legacy decoder profile differs from target profile')
     return {'schema_version':1,'project_root':str(project),'source':{'repository':str(repo),'tag':ref,
-            'tag_object':os.fsdecode(git(repo,'rev-parse',tag).stdout).strip(),'commit':commit,
+            'tag_object':tag_object,'commit':commit,
             'project_prefix':prefix,'submodules':modules},'config':c,'build_config':build,
             'version':version,'version_text':version_text,'output':str(destination),
-            'local_inputs':inputs,'delta_profile':profile,'bases':[str(Path(b).resolve()) for b in bases]}
+            'local_inputs':inputs,'delta_profile':profile,'legacy_base_profile':legacy,'bases':[str((Path(b) if Path(b).is_absolute() else project/Path(b)).resolve()) for b in bases]}
 
 
 def export_tree(repo,commit,destination):

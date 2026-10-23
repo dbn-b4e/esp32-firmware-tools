@@ -1,5 +1,6 @@
 import importlib.util,json,os,subprocess,tempfile,unittest
 from pathlib import Path
+from unittest.mock import patch
 import test_project
 ROOT=test_project.ROOT
 
@@ -52,6 +53,43 @@ class ReleaseSourceTests(unittest.TestCase):
    for path in ['../outside','src/node/version.h','not-present']:
     config['local_inputs']=[path];(p/'release-config.json').write_text(json.dumps(config));git(r,'add','.');git(r,'commit','-m',path);git(r,'tag','bad'+str(len(path)))
     with self.subTest(path=path),self.assertRaises(ValueError):a.make_plan(p,'bad'+str(len(path)))
+ def test_tracked_current_local_input_is_refused_even_if_ignored_in_tag(self):
+  a=self.api()
+  with tempfile.TemporaryDirectory(dir=ROOT/'tmp') as t:
+   r=Path(t);fixture(r);(r/'private.h').write_text('fixture-only')
+   (r/'release-config.json').write_text(json.dumps({'schema_version':1,'name':'fixture','local_inputs':['private.h']}))
+   git(r,'add','release-config.json');git(r,'commit','-m','input declaration');git(r,'tag','with-input')
+   git(r,'add','-f','private.h')
+   with self.assertRaisesRegex(ValueError,'tracked'):a.make_plan(r,'with-input')
+ def test_tag_object_and_commit_stay_consistent_if_ref_moves(self):
+  a=self.api()
+  with tempfile.TemporaryDirectory(dir=ROOT/'tmp') as t:
+   r=Path(t);fixture(r);git(r,'tag','moving')
+   (r/'new-file').write_text('second commit');git(r,'add','.');git(r,'commit','-m','second')
+   later=git(r,'rev-parse','HEAD');original=a.git;moved=[]
+   def hooked(repo,*args,**kwargs):
+    result=original(repo,*args,**kwargs)
+    if not moved and args[:2]==('rev-parse','--verify') and args[-1].startswith('refs/tags/moving'):
+     moved.append(True);git(r,'tag','-f','moving',later)
+    return result
+   with patch.object(a,'git',side_effect=hooked):plan=a.make_plan(r,'moving')
+   self.assertTrue(moved)
+   self.assertEqual(git(r,'rev-parse',plan['source']['tag_object']+'^{commit}'),plan['source']['commit'])
+ def test_base_and_legacy_profile_paths_are_relative_to_project_not_process_cwd(self):
+  a=self.api()
+  with tempfile.TemporaryDirectory(dir=ROOT/'tmp') as t:
+   r=Path(t);fixture(r)
+   profile=json.loads((ROOT/'ota/examples/esp32c6-profile.json').read_text())
+   (r/'profile.json').write_text(json.dumps(profile))
+   full={k:profile[k] for k in ['manufacturer_code','image_type','stack_version','min_hardware_version','max_hardware_version']}
+   full.update(header_string=profile['model'],espressif_compatible=True)
+   (r/'release-config.json').write_text(json.dumps({'schema_version':1,'name':'fixture','local_inputs':[],'full_ota':full,'delta_profile':'profile.json'}))
+   git(r,'add','.');git(r,'commit','-m','profile');git(r,'tag','profiled')
+   elsewhere=r/'other cwd';elsewhere.mkdir();before=Path.cwd()
+   try:
+    os.chdir(elsewhere);plan=a.make_plan(r,'profiled',bases=['legacy'],legacy_base_profile='profile.json')
+   finally:os.chdir(before)
+   self.assertEqual(plan['bases'],[str(r/'legacy')])
  def test_output_confinement_and_existing_destination(self):
   a=self.api()
   with tempfile.TemporaryDirectory(dir=ROOT/'tmp') as t:

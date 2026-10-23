@@ -19,11 +19,11 @@ class ReleaseArchiveTests(unittest.TestCase):
   from esptool.bin_image import ESP32C6FirmwareImage,ImageSegment
   image=ESP32C6FirmwareImage();image.chip_id=13;image.entrypoint=0x40800000
   segment=ImageSegment(0x40800000,struct.pack('<32sI',model.encode(),version)+bytes(range(256))*20);segment.name='.data';image.segments=[segment];image.save(str(path))
- def release(self,root,version,bases=()):
+ def release(self,root,version,bases=(),legacy_profile=None):
   a=self.api();image=root/f'input-{version}.bin';self.image(image,version)
   dest=root/f'release-{version}';dest.mkdir()
   a.create_full(dest/'full',image,version,self.config(),self.profile())
-  deltas=a.create_deltas(dest,image,version,bases,self.config(),self.profile())
+  deltas=a.create_deltas(dest,image,version,bases,self.config(),self.profile(),legacy_profile)
   metadata={'schema_version':1,'kind':'esp32-release','name':'fixture','version':version,'config':self.config(),'delta_profile':self.profile().as_json(),'deltas':deltas,'source':{'tag':f'v0.0.{version}','commit':'0'*40}}
   a.finalize(dest,metadata);a.verify_release(dest)
   return dest
@@ -43,10 +43,31 @@ class ReleaseArchiveTests(unittest.TestCase):
   with tempfile.TemporaryDirectory(dir=ROOT/'tmp') as t:
    r=Path(t);image=r/'base.bin';self.image(image,3);base=r/'legacy'
    a.create_full(base,image,3,self.config(),self.profile());before={p.name:p.read_bytes() for p in base.iterdir()}
-   target=self.release(r,5,[base]);a.verify_release(target)
+   target=self.release(r,5,[base],legacy_profile=self.profile());a.verify_release(target)
    self.assertEqual(before,{p.name:p.read_bytes() for p in base.iterdir()})
    app=next(base.glob('*.app.bin'));app.write_bytes(b'corrupt')
-   with self.assertRaises(ValueError):a.load_base(base,self.config(),self.profile())
+   with self.assertRaises(ValueError):a.load_base(base,self.config(),self.profile(),legacy_profile=self.profile())
+ def test_different_base_decoder_protocol_is_refused(self):
+  a=self.api()
+  from dataclasses import replace
+  with tempfile.TemporaryDirectory(dir=ROOT/'tmp') as t:
+   r=Path(t);base=self.release(r,3);image=r/'target.bin';self.image(image,5)
+   incompatible=replace(self.profile(),envelope_magic=b'OTHER1\0\0')
+   with self.assertRaisesRegex(ValueError,'profile'):a.create_deltas(r/'target',image,5,[base],self.config(),incompatible)
+ def test_legacy_base_requires_explicit_decoder_profile(self):
+  a=self.api()
+  with tempfile.TemporaryDirectory(dir=ROOT/'tmp') as t:
+   r=Path(t);image=r/'base.bin';self.image(image,3);base=r/'legacy'
+   a.create_full(base,image,3,self.config(),self.profile())
+   with self.assertRaisesRegex(ValueError,'legacy'):a.load_base(base,self.config(),self.profile())
+ def test_legacy_filesystem_manifest_is_checked_when_present(self):
+  a=self.api()
+  with tempfile.TemporaryDirectory(dir=ROOT/'tmp') as t:
+   r=Path(t);image=r/'base.bin';self.image(image,3);base=r/'legacy'
+   a.create_full(base,image,3,self.config(),self.profile())
+   (base/'fs.bin').write_bytes(b'truncated')
+   (base/'littlefs-manifest.json').write_text(json.dumps({'kind':'filesystem','model':'EXAMPLE_C6_V1','version':3,'size':100,'sha256':'0'*64,'fs_file':'fs.bin'}))
+   with self.assertRaisesRegex(ValueError,'filesystem'):a.load_base(base,self.config(),self.profile(),legacy_profile=self.profile())
  def test_corruption_unknown_files_symlinks_and_path_escape_rejected(self):
   a=self.api()
   with tempfile.TemporaryDirectory(dir=ROOT/'tmp') as t:
