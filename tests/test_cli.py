@@ -20,4 +20,11 @@ class CLITests(unittest.TestCase):
   with tempfile.TemporaryDirectory(dir=ROOT/'tests') as t:
    r=Path(t);test_project.ProjectTests().fixture(r);p=self.run_cli(r,'--help')
    self.assertEqual(p.returncode,0,p.stderr);self.assertIn('--check-environment',p.stdout)
+ def test_global_help_without_project(self):
+  p=subprocess.run([sys.executable,str(ROOT/'build.py'),'--help'],capture_output=True,text=True)
+  self.assertEqual(p.returncode,0,p.stderr);self.assertIn('--project',p.stdout)
+ def test_generic_help_does_not_advertise_project_only_ota(self):
+  with tempfile.TemporaryDirectory(dir=ROOT/'tests') as t:
+   r=Path(t);test_project.ProjectTests().fixture(r);p=self.run_cli(r,'--help')
+   self.assertEqual(p.returncode,0,p.stderr);self.assertNotIn('--ota',p.stdout)
 if __name__=='__main__':unittest.main()

@@ -1945,22 +1945,19 @@ def main():
         description=BUILD_CONFIG["project"] + " — build.py est le point d entree utilisateur",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Options OTA ajoutees par build.py:
-  --ota                  Generer/verifier OTA complete depuis le .bin compile (aucun appareil contacte)
-  --check-environment    Verifier core, partitions et copie Zigbee locale, sans installation
+Depuis le depot d'outils, selectionner le projet :
+  python3 build.py --project CHEMIN --info
+  python3 build.py --project CHEMIN --check-environment
+  python3 build.py --project CHEMIN --check-libraries
+  python3 build.py --project CHEMIN --build
+  python3 build.py --project CHEMIN --build-littlefs
+  python3 build.py --project CHEMIN --flash --port PORT_CONFIRME
+  python3 build.py --project CHEMIN --littlefs --port PORT_CONFIRME
 
-Exemples depuis la racine du projet :
-  python3 build.py --info                         # Configuration et version, sans appareil
-  python3 build.py --check-environment            # Core exact, partitions et patch local
-  python3 build.py --check-libraries              # Versions des bibliotheques
-  python3 build.py --build                        # Compiler l'application seulement
-  python3 build.py --build --ota                  # Compiler puis preparer l'OTA complete locale
-  python3 build.py --build-littlefs               # Construire LittleFS, sans l'ecrire
-  python3 build.py --flash --port PORT_CONFIRME   # Ecrire l'application par USB
-  python3 build.py --littlefs --port PORT_CONFIRME # Ecrire LittleFS par USB
-
-Les scripts sous tools/ sont internes. Reglages : build-config.json.
-Les cartes et les options sont declarees dans build-config.json.
+--build construit aussi LittleFS si le dossier data/ du sketch existe.
+Aucun flash avec --build. Configuration : build-config.json dans le projet.
+Le packaging OTA autonome utilise les scripts du dossier ota/.
+Un wrapper de projet peut ajouter ses propres commandes.
         """
     )
 
@@ -1992,12 +1989,12 @@ Les cartes et les options sont declarees dans build-config.json.
         "--erase",
         choices=["none", "all", "keep_nvs_littlefs"],
         default="none",
-        help="Modes effacement desactives pour B4E (protection NVS/Zigbee)"
+        help="Effacement desactive : proteger les partitions persistantes"
     )
 
     parser.add_argument(
         "-p", "--port",
-        help="Serial port (auto-detect if not specified)",
+        help="Port confirme obligatoire pour les ecritures appareil",
         default=None
     )
 
@@ -2108,7 +2105,7 @@ Les cartes et les options sont declarees dans build-config.json.
         help="Check if required libraries are installed with correct versions"
     )
 
-    parser.add_argument("--check-environment", action="store_true", help="Verifier le core exact et le patch Zigbee local, sans ecriture appareil")
+    parser.add_argument("--check-environment", action="store_true", help="Verifier le core, les partitions et la politique du projet, sans ecriture appareil")
     args = parser.parse_args()
     from .partitions import validate_layout
     try:
