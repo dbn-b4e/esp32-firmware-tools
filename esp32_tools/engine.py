@@ -56,7 +56,7 @@ def find_sketch_file():
 
 SKETCH_NAME = find_sketch_file()
 FQBN = fqbn(BUILD_CONFIG)
-PARTITIONS_CSV = 'partitions.csv'
+PARTITIONS_CSV = str(project_path(ROOT, BUILD_CONFIG['paths']['partitions']))
 BUILD_PATH = str(project_path(ROOT, BUILD_CONFIG['paths']['build']))
 BAUD_RATE = str(BUILD_CONFIG['upload_baud'])
 ARDUINO_CLI_PATH = 'arduino-cli'

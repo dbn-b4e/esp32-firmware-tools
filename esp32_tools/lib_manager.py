@@ -605,7 +605,7 @@ const char* EXTERNAL_LIBS_NAMES[] = {{
         if tools_dir not in sys.path:
             sys.path.insert(0, tools_dir)
 
-        from library_checker import get_core_libraries
+        from .library_checker import get_core_libraries
 
         print_color("\n📚 Installed Arduino Libraries", "bold")
         print_color("="*80, "blue")
