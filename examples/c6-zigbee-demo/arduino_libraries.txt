@@ -1,0 +1,2 @@
+# Bundled with the exact Arduino ESP32 core selected in build-config.json.
+Zigbee==3.3.4

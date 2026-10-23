@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "device": {
+    "model": "C6-TOOLS-DEMO",
+    "manufacturer": "Example",
+    "description": "BOOT input, LED output and simulated temperature",
+    "firmware_version": 65536
+  },
+  "ota": false,
+  "endpoints": [
+    {
+      "id": 10,
+      "name": "led",
+      "clusters": {
+        "input": [
+          0,
+          3,
+          4,
+          5,
+          6
+        ],
+        "output": []
+      },
+      "features": [
+        {
+          "type": "on_off"
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "name": "boot",
+      "clusters": {
+        "input": [
+          0,
+          3,
+          15
+        ],
+        "output": []
+      },
+      "features": [
+        {
+          "type": "binary_input",
+          "property": "pressed",
+          "reporting": {
+            "min": 0,
+            "max": 60,
+            "change": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "name": "simulated",
+      "clusters": {
+        "input": [
+          0,
+          3,
+          1026
+        ],
+        "output": []
+      },
+      "features": [
+        {
+          "type": "temperature",
+          "reporting": {
+            "min": 5,
+            "max": 60,
+            "change": 10
+          }
+        }
+      ]
+    }
+  ]
+}

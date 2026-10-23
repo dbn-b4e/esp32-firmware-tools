@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "project": "C6 Zigbee demonstration",
+  "core": {
+    "id": "esp32:esp32",
+    "version": "3.3.4"
+  },
+  "board": {
+    "id": "esp32c6",
+    "options": {
+      "ZigbeeMode": "ed",
+      "PartitionScheme": "custom",
+      "CDCOnBoot": "cdc",
+      "FlashSize": "4M"
+    }
+  },
+  "chip": "esp32c6",
+  "bootloader_offset": "0x0",
+  "version": {
+    "macro": "EXAMPLE_FW_VERSION"
+  },
+  "paths": {
+    "sketch": "sketch",
+    "partitions": "sketch/partitions.csv",
+    "version_header": "sketch/version.h",
+    "requirements": "arduino_libraries.txt",
+    "build": "build",
+    "firmware": "firmware"
+  },
+  "upload_baud": 921600
+}

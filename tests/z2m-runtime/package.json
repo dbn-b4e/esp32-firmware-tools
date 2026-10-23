@@ -1,0 +1,7 @@
+{
+  "name": "esp32-firmware-tools-z2m-validation",
+  "private": true,
+  "type": "module",
+  "scripts": {"test": "node --test generated-converter.test.mjs"},
+  "devDependencies": {"zigbee-herdsman-converters": "26.115.1"}
+}

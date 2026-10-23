@@ -19,3 +19,20 @@ jobs:
         working-directory: ota
       - run: python ota/zigbee_ota_generator.py --help
       - run: python ota/delta_ota.py --help
+  converter-runtime:
+    strategy:
+      matrix:
+        node: ['22', '24']
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: tests/z2m-runtime/package-lock.json
+      - run: npm ci --prefix tests/z2m-runtime --ignore-scripts --no-audit --no-fund
+      - run: npm test --prefix tests/z2m-runtime

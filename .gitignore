@@ -10,3 +10,8 @@ tmp/
 .DS_Store
 
 node_modules/
+
+/examples/c6-zigbee-demo/firmware/
+/examples/c6-zigbee-demo/sketch/build.log
+/examples/c6-zigbee-demo/sketch/build_log_*.txt
+/examples/c6-zigbee-demo/sketch/info/
