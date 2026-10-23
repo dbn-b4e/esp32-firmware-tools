@@ -20,6 +20,13 @@ class CLITests(unittest.TestCase):
   with tempfile.TemporaryDirectory(dir=ROOT/'tests') as t:
    r=Path(t);test_project.ProjectTests().fixture(r);p=self.run_cli(r,'--help')
    self.assertEqual(p.returncode,0,p.stderr);self.assertIn('--check-environment',p.stdout)
+ def test_standard_cpp_header_is_not_a_missing_arduino_library(self):
+  with tempfile.TemporaryDirectory(dir=ROOT/'tests') as t:
+   r=Path(t);test_project.ProjectTests().fixture(r)
+   script="from arduino import engine; from pathlib import Path; p=Path(engine.SKETCH_FOLDER)/engine.SKETCH_NAME; p.write_text('#include <atomic>\\n#include <MySensor.h>\\n'); assert engine.extract_includes_from_sketch()==['MySensor.h'], engine.extract_includes_from_sketch()"
+   env=dict(os.environ);env['ESP32_BUILD_PROJECT']=str(r)
+   p=subprocess.run([sys.executable,'-c',script],cwd=ROOT,env=env,capture_output=True,text=True)
+   self.assertEqual(p.returncode,0,p.stderr)
  def test_global_help_without_project(self):
   p=subprocess.run([sys.executable,str(ROOT/'build.py'),'--help'],capture_output=True,text=True)
   self.assertEqual(p.returncode,0,p.stderr);self.assertIn('--project',p.stdout)

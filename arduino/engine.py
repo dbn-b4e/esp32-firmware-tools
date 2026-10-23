@@ -768,6 +768,8 @@ def extract_includes_from_sketch() -> List[str]:
         'arpa/', 'netinet/',              # Network
     }
 
+    # Exact names: do not hide a third-party header containing e.g. "atomic".
+    cpp_headers = set("algorithm any array atomic bitset chrono codecvt complex condition_variable deque exception execution filesystem forward_list fstream functional future initializer_list iomanip ios iosfwd iostream istream iterator limits list locale map memory memory_resource mutex new numeric optional ostream queue random ratio regex scoped_allocator set shared_mutex sstream stack stdexcept streambuf string string_view strstream system_error thread tuple type_traits typeindex typeinfo unordered_map unordered_set utility valarray variant vector cassert cctype cerrno cfenv cfloat cinttypes ciso646 climits clocale cmath csetjmp csignal cstdarg cstddef cstdint cstdio cstdlib cstring ctgmath ctime cuchar cwchar cwctype".split())
     includes = []
     try:
         sketch_path = os.path.join(SKETCH_FOLDER, SKETCH_NAME)
@@ -779,7 +781,7 @@ def extract_includes_from_sketch() -> List[str]:
 
         # Filter out system includes and project-local headers
         for match in matches:
-            if os.path.isfile(os.path.join(SKETCH_FOLDER, match)):
+            if match in cpp_headers or os.path.isfile(os.path.join(SKETCH_FOLDER, match)):
                 continue
             include_lower = match.lower()
             is_system = False

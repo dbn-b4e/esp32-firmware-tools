@@ -45,6 +45,8 @@ firmware ou de toutes les dépendances de la chaîne.
 
 - Validation globale des noms de propriétés finaux : refus des collisions entre
   types et entre endpoints, y compris les alias dus aux underscores.
+- Exclusion exacte des headers standard C++ dans le diagnostic des bibliothèques,
+  sans masquer les headers tiers.
 - Timeout d’écriture pyserial en plus du timeout de lecture ; fermeture garantie
   de la connexion en cas d’échec.
 - Documentation de la limite des drapeaux de connexion Arduino et de la portée
@@ -56,7 +58,7 @@ zigbee-herdsman-converters, pas un substitut de son API.
 
 ## Validation et limites
 
-32 tests Python communs, 19 OTA et 4 tests runtime JavaScript passent sur Mac.
+33 tests Python communs, 19 OTA et 4 tests runtime JavaScript passent sur Mac.
 L’exemple compile réellement avec le core Arduino 3.3.4. Le header C++ du FW est
 exécuté sur hôte pour vérifier l’export et le convertisseur archivés. B4E est
 recompilé et testé séparément avec son sous-module et sa politique locale.
