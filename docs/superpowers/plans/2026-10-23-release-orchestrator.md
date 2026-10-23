@@ -86,3 +86,9 @@ Files: B4E release-config.json, tools/ota-profile.json ; docs et README outils ;
 
 - Task 4: validation réelle finale complete — code outils 9f136d3, tag B4E v1.0.5/86abe57 exporté, entrée config.h privée et sous-module 6e16099 exact ; 17 bibliothèques réellement compilées, 18 fichiers archivés. Full 1 560 466 octets, delta v1.0.4→v1.0.5 38 844 octets, LittleFS 372 736 octets. verify autonome OK, profil legacy explicitement enregistré, anciens artefacts inchangés. Aucun flash ni action HA/Z2M.
 - Final review gate : tous les findings importants corrigés, aucune mineure différée. Audit historique au commit 9f136d3 : 169 blobs/1 619 853 octets, aucun motif de secret ou artefact privé. Les métadonnées d’auteur publiques restent dans Git.
+
+- Garde finale de destination : --output ne peut pas chevaucher build/release-work, pour ne pas incorporer le snapshot privé dans l’archive. Régression de deux alias RED→GREEN ; le chemin de validation réelle est disjoint et reste inchangé.
+
+- CI Windows a reproduit un UnicodeEncodeError dans l’aide globale (flèche dans console cp1252). Régression locale PYTHONIOENCODING=cp1252:strict RED→GREEN, réutilisation de common.console.safe_print au lanceur racine ; aucun changement de compilation/packaging.
+
+- Validation finale après garde scratch et encodage Windows : 60/60 tests communs sur Mac. Les deux échecs CI Windows précédents étaient exclusivement l’affichage global ; tous les tests release y étaient déjà verts. Nouvelle CI complète lancée après commit correctif.

@@ -98,6 +98,12 @@ class ReleaseSourceTests(unittest.TestCase):
     with self.subTest(output=output),self.assertRaises(ValueError):a.make_plan(r,'v1.2.3',output=output)
    (r/'build/present').mkdir(parents=True)
    with self.assertRaisesRegex(ValueError,'exists'):a.make_plan(r,'v1.2.3',output='build/present')
+ def test_archive_destination_cannot_overlap_private_scratch(self):
+  a=self.api()
+  with tempfile.TemporaryDirectory(dir=ROOT/'tmp') as t:
+   r=Path(t);fixture(r)
+   for output in ['build/release-work','build/release-work/archive']:
+    with self.subTest(output=output),self.assertRaisesRegex(ValueError,'scratch'):a.make_plan(r,'v1.2.3',output=output)
  def test_symlink_in_git_export_is_refused(self):
   a=self.api()
   if os.name=='nt':self.skipTest('Windows symlink creation requires extra privileges')

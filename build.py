@@ -4,6 +4,7 @@ import argparse
 import os
 from pathlib import Path
 import sys
+from common.console import safe_print as print
 
 
 def main():

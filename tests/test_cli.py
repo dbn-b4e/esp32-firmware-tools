@@ -30,6 +30,10 @@ class CLITests(unittest.TestCase):
  def test_global_help_without_project(self):
   p=subprocess.run([sys.executable,str(ROOT/'build.py'),'--help'],capture_output=True,text=True)
   self.assertEqual(p.returncode,0,p.stderr);self.assertIn('--project',p.stdout)
+ def test_global_help_with_legacy_windows_console_encoding(self):
+  env=dict(os.environ);env['PYTHONIOENCODING']='cp1252:strict'
+  p=subprocess.run([sys.executable,str(ROOT/'build.py'),'--help'],capture_output=True,text=True,encoding='cp1252',env=env)
+  self.assertEqual(p.returncode,0,p.stderr);self.assertIn('--project',p.stdout);self.assertIn('release',p.stdout)
  def test_generic_help_does_not_advertise_project_only_ota(self):
   with tempfile.TemporaryDirectory(dir=ROOT/'tests') as t:
    r=Path(t);test_project.ProjectTests().fixture(r);p=self.run_cli(r,'--help')

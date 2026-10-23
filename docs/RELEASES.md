@@ -33,7 +33,8 @@ des bases et de `--legacy-base-profile` sont résolus depuis le projet, comme
 utilisent des listes d’arguments, sans shell.
 
 `--output CHEMIN_RELATIF` choisit une autre destination dans le projet. Elle doit
-être ignorée par Git et ne pas exister. Pas de `--force` : une release existante
+être ignorée par Git, ne pas exister et rester séparée de
+`build/release-work/` (aucun chevauchement avec le scratch privé). Pas de `--force` : une release existante
 est une base potentiellement installée, pas un dossier de staging à recycler.
 Le défaut est `build/releases/NOM/vMAJOR.MINOR.PATCH`. Si le projet n’ignore pas
 encore `build/`, l’ajouter à son `.gitignore` avant de lancer le CLI.

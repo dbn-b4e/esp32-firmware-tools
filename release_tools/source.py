@@ -83,6 +83,8 @@ def make_plan(project,ref,output=None,bases=(),legacy_base_profile=None):
         require(parts==[version>>16,(version>>8)&255,version&255],'Tag version differs from tagged firmware version')
     output=output or 'build/releases/'+c['name']+'/v'+version_text
     destination=inside(project,str(output))
+    scratch=inside(project,'build/release-work')
+    require(not destination.is_relative_to(scratch) and not scratch.is_relative_to(destination),'Release output overlaps private scratch')
     require(ignored(repo,destination),'Release output must be ignored by Git')
     require(not destination.exists(),'Release output already exists')
     require(ignored(repo,project/'build/release-work'),'Scratch build/release-work must be ignored by Git')

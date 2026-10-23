@@ -108,7 +108,7 @@ nouvelle interview n’a été nécessaire pour ce correctif compatible.
 
 La commande `build.py release plan|build|verify` a été testée avec de vrais Git
 locaux, un projet en sous-dossier, des sous-modules épinglés et des archives ESP
-valides. 58 tests Python communs, 19 tests OTA et 4 tests runtime Z2M passent sur
+valides. 60 tests Python communs, 19 tests OTA et 4 tests runtime Z2M passent sur
 Mac. Une revue indépendante a comparé fonction par fonction les anciens scripts
 B4E et la nouvelle orchestration ; les écarts importants de profil de base et
 de validation filesystem ont été reproduits puis corrigés avec des régressions.
