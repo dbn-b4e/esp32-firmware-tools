@@ -48,3 +48,14 @@ par les propriétés Arduino, sans chemins Mac codés en dur.
 
 Hors de ce premier lot : génération OTA (dépôt esp32C6-OTA-Builder), sélection
 Git de tags, installation de cartes custom et interface Qt.
+
+Le CLI lance un processus neuf par invocation et sélectionne un seul projet.
+Ne pas importer le moteur pour piloter plusieurs projets dans des threads :
+contexte, cwd et cache des propriétés sont propres au processus. Une seule
+compilation à la fois par projet (pas encore de verrou inter-processus).
+
+Les commandes historiques de maintenance des bibliothèques et routines internes
+héritées sont conservées, mais n'ont pas toutes été revalidées dans ce premier
+lot. Les chemins désactivés ne constituent pas une API générique supportée.
+Un échec/timeout de découverte Arduino arrête la chaîne ; certaines erreurs de
+réponse CLI peuvent encore afficher un traceback au lieu d'un message court.
