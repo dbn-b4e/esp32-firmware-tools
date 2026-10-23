@@ -144,6 +144,38 @@ class DeltaTests(unittest.TestCase):
             with self.subTest(changes=changes), self.assertRaises(ValueError):
                 self.profile(**changes)
 
+    def test_refuses_trailing_bytes_even_when_suffix_repeats_digest(self):
+        with tempfile.TemporaryDirectory(dir='tmp') as tmp:
+            base, _ = self.pair(Path(tmp))
+            original = base.read_bytes()
+            with self.assertRaises(ValueError):
+                self.api().esp_digest(original + b'garbage' + original[-32:])
+
+    def test_truncated_esp_images_raise_valueerror(self):
+        with tempfile.TemporaryDirectory(dir='tmp') as tmp:
+            base, _ = self.pair(Path(tmp))
+            original = base.read_bytes()
+            for length in (24, 64, 256):
+                with self.subTest(length=length), self.assertRaises(ValueError):
+                    self.api().esp_digest(original[:length])
+
+    def test_reconstruction_is_checked_after_metadata_is_recalculated(self):
+        with tempfile.TemporaryDirectory(dir='tmp') as tmp:
+            api = self.api()
+            profile = self.profile()
+            base, target, output, m = self.make(Path(tmp))
+            payload = bytearray((output / m['delta_file']).read_bytes())
+            payload[-1] ^= 0xff
+            payload = bytes(payload)
+            ota = api.wrap(payload, profile, 5)
+            refreshed = api.manifest(payload, ota, profile)
+            (output / m['delta_file']).write_bytes(payload)
+            (output / m['zigbee_file']).write_bytes(ota)
+            (output / 'delta-manifest.json').write_text(json.dumps(refreshed))
+            (output / 'z2m-index.json').write_text(json.dumps(api.index_for(refreshed, profile)))
+            with self.assertRaisesRegex(ValueError, 'reconstruct|Reconstruct'):
+                api.verify_delta(output, base, target, profile)
+
     def test_generic_envelope_matches_original_b4e_layout(self):
         import detools
         api = self.api()

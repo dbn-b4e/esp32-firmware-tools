@@ -91,6 +91,7 @@ def envelope(base, target, base_version, version, patch, profile):
 
 def esp_digest(data):
     from esptool.bin_image import ESP32C6FirmwareImage
+    from esptool.util import FatalError
     require(len(data) >= 24 and data[0] == 0xe9 and struct.unpack_from('<H', data, 12)[0] == 13 and data[23] == 1,
             'Expected ESP32-C6 application image with appended digest')
     try:
@@ -99,9 +100,9 @@ def esp_digest(data):
         require(image.append_digest and image.stored_digest == image.calc_digest, 'Invalid ESP SHA256 digest')
         require(image.checksum == image.calculate_checksum(), 'Invalid ESP checksum')
         # Reject bytes outside the valid image, not silently ignored by esptool.
-        require(data.endswith(image.stored_digest), 'Trailing bytes after ESP digest')
+        require(len(data) == image.data_length + 32, 'Trailing bytes after ESP digest')
         return image.stored_digest
-    except (ValueError, struct.error, EOFError) as error:
+    except (FatalError, ValueError, struct.error, EOFError, TypeError, IndexError) as error:
         raise ValueError(f'Invalid ESP application: {error}') from error
 
 
