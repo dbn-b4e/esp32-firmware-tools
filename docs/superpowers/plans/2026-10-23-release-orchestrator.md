@@ -46,8 +46,8 @@ Files: release_tools/source.py, config.py ; tests/test_release_source.py.
 ### Task 2 — Archives full et delta
 
 Files: release_tools/archive.py ; tests/test_release_archive.py.
-- [ ] Tests avec vraies images ESP synthétiques et detools : full, corruption, mauvais modèle/version, anciennes bases B4E, bases multiples, delta direct 1→5, archive autoportante et refus des fichiers non déclarés/liens.
-- [ ] Observer RED, réutiliser les primitives OTA existantes, GREEN et suite, commit.
+- [x] Tests avec vraies images ESP synthétiques et detools : full, corruption, mauvais modèle/version, anciennes bases B4E, bases multiples, delta direct 1→5, archive autoportante et refus des fichiers non déclarés/liens.
+- [x] Observer RED, réutiliser les primitives OTA existantes, GREEN et suite, commit.
 
 ### Task 3 — Orchestration CLI
 
@@ -69,3 +69,5 @@ Files: B4E release-config.json, tools/ota-profile.json ; docs et README outils ;
 
 - Task 1: complete — six régressions RED→GREEN ; suite commune 40 tests OK. Git réel, tags annotés, sous-modules épinglés et entrée locale changée couverts.
 - Workspace : worktree persistante dans tmp/release-orchestrator, ignorée ; les outils natifs sont liés au checkout de la tâche WIMEREUX et ne permettent pas de choisir ce dépôt d’outils. Aucun accès infra dans ce chantier.
+
+- Task 2: complete — quatre tests d’archives RED→GREEN, 44 tests communs OK avec dépendances delta. Full + deltas 3→5/4→5 reconstruits, bases legacy et autoportance contrôlées.
