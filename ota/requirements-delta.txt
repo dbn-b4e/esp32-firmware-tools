@@ -1,0 +1,3 @@
+# Versions validated against the ESP32-C6 streaming decoder.
+detools==0.53.0
+esptool==5.2.0

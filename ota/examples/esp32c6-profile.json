@@ -1,0 +1,12 @@
+{
+  "name": "example-c6",
+  "model": "EXAMPLE_C6_V1",
+  "magic_hex": "455350444c543100",
+  "min_base_version": 1,
+  "slot_size": 1835008,
+  "manufacturer_code": 4169,
+  "image_type": 1,
+  "stack_version": 2,
+  "min_hardware_version": 1,
+  "max_hardware_version": 1
+}

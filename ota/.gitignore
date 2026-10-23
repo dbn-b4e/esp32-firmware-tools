@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Build files
+build/
+*.ota
+*.bin
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Test files
+test_*.ota
+
+# Local development and private validation
+.worktrees/
+.superpowers/
+tmp/
+.venv/
+
+# Credentials and device-specific artifacts
+.env
+.env.*
+*.pem
+*.key
+private-artifacts/
