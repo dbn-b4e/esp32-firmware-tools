@@ -2408,6 +2408,9 @@ Un wrapper de projet peut ajouter ses propres commandes.
             # firmware_file = copy_firmware_to_local(firmware_file)
             pass
             if firmware_file:
+                app_bin = os.path.join(os.path.dirname(firmware_file), f"{SKETCH_NAME}.bin")
+                if os.path.exists(app_bin):
+                    report_flash_budget(app_bin)
                 # Generate and save build log
                 log_content = generate_build_log(build_output or "", firmware_file)
                 save_build_log(log_content, filename=args.log)
