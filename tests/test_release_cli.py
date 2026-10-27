@@ -100,4 +100,18 @@ class ReleaseCLITests(unittest.TestCase):
    dest=Path(plan['output']);self.assertFalse((dest/'release-manifest.json').exists())
    logs=list((root/'build/release-work').glob('*/build.log'));self.assertEqual(len(logs),1)
    if os.name!='nt':self.assertEqual(logs[0].stat().st_mode&0o077,0)
+class ToolPinTests(unittest.TestCase):
+ def test_tagged_tools_submodule_must_match_running_engine(self):
+  from release_tools import runner
+  from release_tools.runner import check_tool_pin,TOOLS
+  import subprocess
+  head=subprocess.run(['git','-C',str(TOOLS),'rev-parse','HEAD'],capture_output=True,text=True).stdout.strip()
+  previous=subprocess.run(['git','-C',str(TOOLS),'rev-parse','HEAD~1'],capture_output=True,text=True).stdout.strip()
+  def plan(commit):return {'source':{'submodules':[{'path':'tools/engine','commit':commit,'repository':str(TOOLS)}]}}
+  check_tool_pin(plan(head))  # pinned commit equals the running engine
+  with self.assertRaisesRegex(ValueError,'differs from the running engine'):check_tool_pin(plan(previous))
+  check_tool_pin(plan(previous),allow_mismatch=True)
+  # A submodule that is not the engine (no release_tools/cli.py at that commit) is never checked.
+  check_tool_pin({'source':{'submodules':[{'path':'libs/other','commit':'0'*40,'repository':str(TOOLS)}]}})
+
 if __name__=='__main__':unittest.main()

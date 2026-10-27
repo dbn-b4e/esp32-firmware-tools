@@ -42,7 +42,19 @@ def run_backend(project,log):
     return {'libraries':libraries,'arduino_cli':cli_info}
 
 
-def build_release(plan):
+def check_tool_pin(plan,allow_mismatch=False):
+    """The tag pins the engine that built it; packaging with another engine must be explicit."""
+    if allow_mismatch:return
+    mine=tool_identity()['commit']
+    for m in plan['source']['submodules']:
+        r=source.git(m['repository'],'ls-tree','--name-only',m['commit'],'--','release_tools/cli.py',check=False)
+        if r.returncode==0 and r.stdout.strip():
+            require(mine==m['commit'],'Tagged tools submodule '+m['commit'][:12]+' differs from the running engine '
+                    +((mine or 'unknown')[:12])+'; check out the pinned tools or pass --allow-tool-mismatch')
+
+
+def build_release(plan,allow_tool_mismatch=False):
+    check_tool_pin(plan,allow_tool_mismatch)
     project=Path(plan['project_root']);destination=Path(plan['output'])
     require(inside(project,destination.relative_to(project).as_posix())==destination,'Invalid output destination')
     require(source.ignored(Path(plan['source']['repository']),destination),'Output must be ignored')

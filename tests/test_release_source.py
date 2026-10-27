@@ -104,6 +104,19 @@ class ReleaseSourceTests(unittest.TestCase):
    r=Path(t);fixture(r)
    for output in ['build/release-work','build/release-work/archive']:
     with self.subTest(output=output),self.assertRaisesRegex(ValueError,'scratch'):a.make_plan(r,'v1.2.3',output=output)
+ def test_symlinked_ignored_output_resolving_inside_project_is_accepted(self):
+  a=self.api()
+  if os.name=='nt':self.skipTest('Windows symlink creation requires extra privileges')
+  with tempfile.TemporaryDirectory(dir=ROOT/'tmp') as t:
+   r=Path(t);fixture(r)
+   (r/'.gitignore').write_text('build/\nprivate.h\nprivate-archives/\n')
+   (r/'private-archives/releases').mkdir(parents=True)
+   (r/'build').mkdir(exist_ok=True);(r/'build/releases').symlink_to('../private-archives/releases')
+   plan=a.make_plan(r,'v1.2.3')  # documented default output, behind the project-internal link
+   self.assertEqual(Path(plan['output']),(r/'private-archives/releases/fixture/v1.2.3').resolve())
+   outside=Path(tempfile.mkdtemp(dir=ROOT/'tmp'))
+   (r/'build/escape').symlink_to(outside)
+   with self.assertRaisesRegex(ValueError,'escapes'):a.make_plan(r,'v1.2.3',output='build/escape/x')
  def test_symlink_in_git_export_is_refused(self):
   a=self.api()
   if os.name=='nt':self.skipTest('Windows symlink creation requires extra privileges')

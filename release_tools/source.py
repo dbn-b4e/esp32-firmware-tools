@@ -82,7 +82,10 @@ def make_plan(project,ref,output=None,bases=(),legacy_base_profile=None):
         parts=[int(x) for x in ref.lstrip('v').split('.')];parts+=[] if len(parts)==3 else [0]
         require(parts==[version>>16,(version>>8)&255,version&255],'Tag version differs from tagged firmware version')
     output=output or 'build/releases/'+c['name']+'/v'+version_text
-    destination=inside(project,str(output))
+    # Release outputs may sit behind a project-internal symlink (e.g. build/releases -> private
+    # archives); the fully resolved destination must still live inside the project.
+    destination=(project/relative(str(output))).resolve()
+    require(destination.is_relative_to(project),'Release output escapes the project')
     scratch=inside(project,'build/release-work')
     require(not destination.is_relative_to(scratch) and not scratch.is_relative_to(destination),'Release output overlaps private scratch')
     require(ignored(repo,destination),'Release output must be ignored by Git')

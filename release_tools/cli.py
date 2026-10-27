@@ -15,6 +15,7 @@ def main(project,args):
         q.add_argument('--base-release',type=Path,action='append',default=[],help='Exact archived base; repeat for several bases')
         q.add_argument('--legacy-base-profile',type=Path,help='Explicit known decoder contract for legacy bases without a recorded profile')
         q.add_argument('--output',help='New project-relative Git-ignored destination')
+        if name=='build':q.add_argument('--allow-tool-mismatch',action='store_true',help='Package although the running engine differs from the tools submodule pinned by the tag')
     q=sub.add_parser('verify');q.add_argument('--archive',type=Path,required=True)
     a=p.parse_args(args)
     try:
@@ -29,6 +30,6 @@ def main(project,args):
         if a.command=='plan':print(json.dumps(plan,indent=2,ensure_ascii=True));return 0
         from .runner import build_release
         print('Building tag',plan['source']['tag'],'at',plan['source']['commit'],flush=True)
-        result=build_release(plan);print('Verified release:',result);return 0
+        result=build_release(plan,allow_tool_mismatch=a.allow_tool_mismatch);print('Verified release:',result);return 0
     except (OSError,ValueError,KeyError,TypeError,subprocess.SubprocessError) as e:
         p.exit(1,'Release refused: '+str(e)+'\n')
