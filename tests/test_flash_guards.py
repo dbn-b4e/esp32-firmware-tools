@@ -86,4 +86,19 @@ class FlashGuards(unittest.TestCase):
     targets={(Path(c.args[1]).name,c.args[2] if len(c.args)>2 else c.kwargs['offset']) for c in v.call_args_list}
     self.assertEqual(targets,{('node.ino.bootloader.bin','0x0'),('node.ino.partitions.bin','0x8000'),('node.ino.bin','0x10000')})
 
+ def test_flash_budget_reports_slot_margin_and_warns_near_full(self):
+  with tempfile.TemporaryDirectory(dir=ROOT/'tests') as t:
+   r=Path(t);test_project.ProjectTests().fixture(r);e=self.engine(r);fw=self.artifacts(r,e)
+   self.assertEqual(e.flash_budget(917504,0x100000),{'app':917504,'slot':1048576,'percent':87,'remaining':131072})
+   (fw/'node.ino.bin').write_bytes(bytes(995000))
+   with patch.object(e,'print_color') as out:
+    b=e.report_flash_budget(str(fw/'node.ino.bin'))
+    self.assertEqual((b['slot'],b['percent']),(1048576,94))
+    text=' '.join(str(c.args[0]) for c in out.call_args_list)
+    self.assertIn('995,000',text);self.assertIn('94%',text)
+    self.assertTrue(any(c.args[1]=='yellow' for c in out.call_args_list))
+   (fw/'node.ino.bin').write_bytes(bytes(100000))
+   with patch.object(e,'print_color') as out:
+    e.report_flash_budget(str(fw/'node.ino.bin'))
+    self.assertTrue(any(c.args[1]=='green' for c in out.call_args_list))
 if __name__=='__main__':unittest.main()

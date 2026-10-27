@@ -1171,6 +1171,23 @@ def save_build_log(log_content: str, filename: str = None) -> str:
         return None
 
 
+def flash_budget(app_size: int, slot_size: int) -> Dict[str, int]:
+    """App binary size against the app0 OTA slot."""
+    return {'app': app_size, 'slot': slot_size,
+            'percent': app_size * 100 // slot_size, 'remaining': slot_size - app_size}
+
+
+def report_flash_budget(app_path: str) -> Dict[str, int]:
+    """Print the remaining OTA slot margin after every build; warn when nearly full."""
+    slot = validate_layout(PARTITIONS_CSV)['app0'][3]
+    b = flash_budget(os.path.getsize(app_path), slot)
+    color = 'red' if b['percent'] >= 95 else 'yellow' if b['percent'] >= 90 else 'green'
+    print_color(f"📐 Flash app0: {b['app']:,} / {b['slot']:,} bytes ({b['percent']}%) — {b['remaining']:,} bytes free", color)
+    if b['percent'] >= 90:
+        print_color("⚠️  OTA slot nearly full: plan size reduction or a larger flash before adding features", "yellow")
+    return b
+
+
 def read_device_macs(esptool: str, port: str) -> set:
     """MAC/EUI-64 strings reported by the device, lowercase."""
     cmd = build_esptool_cmd(esptool, ["--chip", BUILD_CONFIG["chip"], "-p", port, "read-mac"])
@@ -1517,6 +1534,9 @@ def interactive_auto_mode(verbose: bool = False):
             # firmware_file = copy_firmware_to_local(firmware_file)
             pass
             if firmware_file:
+                app_bin = os.path.join(os.path.dirname(firmware_file), f"{SKETCH_NAME}.bin")
+                if os.path.exists(app_bin):
+                    report_flash_budget(app_bin)
                 # Generate and save build log
                 log_content = generate_build_log(build_output or "", firmware_file)
                 save_build_log(log_content, filename=args.log)
