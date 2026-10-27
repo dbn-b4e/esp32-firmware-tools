@@ -1171,7 +1171,28 @@ def save_build_log(log_content: str, filename: str = None) -> str:
         return None
 
 
-def flash_firmware(port: str, firmware_path: str, erase_mode: str = "none") -> bool:
+def read_device_macs(esptool: str, port: str) -> set:
+    """MAC/EUI-64 strings reported by the device, lowercase."""
+    cmd = build_esptool_cmd(esptool, ["--chip", BUILD_CONFIG["chip"], "-p", port, "read-mac"])
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+    if r.returncode != 0:
+        raise ValueError("read-mac failed: " + (r.stderr or r.stdout).strip()[:200])
+    return set(re.findall(r"(?i)\b((?:[0-9a-f]{2}:){5,7}[0-9a-f]{2})\b", r.stdout.lower()))
+
+
+def check_expected_mac(esptool: str, port: str, expect_mac: Optional[str]) -> bool:
+    """Refuse to touch a device whose MAC does not match --expect-mac."""
+    if expect_mac is None:
+        return True
+    macs = read_device_macs(esptool, port)
+    print_color(f"  🪪 Device MAC: {', '.join(sorted(macs)) or 'unknown'}", "blue")
+    if expect_mac.strip().lower() in macs:
+        return True
+    print_color(f"❌ Device MAC does not match --expect-mac {expect_mac}; nothing written", "red")
+    return False
+
+
+def flash_firmware(port: str, firmware_path: str, erase_mode: str = "none", expect_mac: Optional[str] = None) -> bool:
     """
     Flash firmware using esptool with Arduino-compatible multi-file pattern.
 
@@ -1232,7 +1253,12 @@ def flash_firmware(port: str, firmware_path: str, erase_mode: str = "none") -> b
             raise ValueError("OTA boot metadata exceeds/mismatches otadata partition")
         if not 0 < os.path.getsize(app_bin) <= layout["app0"][3]:
             raise ValueError("Application exceeds OTA partition")
-        validate_device(build_esptool_cmd(esptool, []), port, PARTITIONS_CSV, BUILD_PATH)
+        if not check_expected_mac(esptool, port, expect_mac):
+            return False
+        # Reading the device table before writing refuses a board laid out for another
+        # project; a full erase is the explicit migration path. A blank chip passes.
+        validate_device(build_esptool_cmd(esptool, []), port, PARTITIONS_CSV, BUILD_PATH,
+                        check_partition=erase_mode != "all")
     except (ValueError, OSError, subprocess.SubprocessError) as exc:
         print_color(f"Flash rejected: {exc}", "red")
         return False
@@ -1368,7 +1394,7 @@ def build_littlefs_image(output_path: str = "littlefs.bin") -> bool:
         return False
 
 
-def flash_littlefs(port: str, littlefs_path: str) -> bool:
+def flash_littlefs(port: str, littlefs_path: str, expect_mac: Optional[str] = None) -> bool:
     """Flash LittleFS partition."""
     print_color(f"\n📦 Flashing LittleFS to {port}...", "bold")
 
@@ -1386,6 +1412,8 @@ def flash_littlefs(port: str, littlefs_path: str) -> bool:
         layout = validate_layout(PARTITIONS_CSV)
         if os.path.getsize(littlefs_path) != layout["littlefs"][3]:
             raise ValueError("LittleFS image size differs from partition")
+        if not check_expected_mac(esptool, port, expect_mac):
+            return False
         validate_device(build_esptool_cmd(esptool, []), port, PARTITIONS_CSV,
                         BUILD_PATH, check_partition=True)
     except (ValueError, OSError, subprocess.SubprocessError) as exc:
@@ -1637,6 +1665,27 @@ def verify_flash_against_binary(port: str, firmware_path: str, offset: str = "0x
                 os.remove(temp_read_file)
             except:
                 pass
+
+
+def verify_flashed_components(port: str, firmware_path: str) -> bool:
+    """Read back each flashed component at its own offset.
+
+    A merged.bin covers the whole flash including NVS/LittleFS/Zigbee regions the
+    device legitimately rewrites, so verifying it always fails on a used board.
+    otadata (boot_app0.bin) is skipped for the same reason: the app owns it.
+    """
+    firmware_dir = os.path.dirname(firmware_path) or FIRMWARE_DIR
+    from .partitions import validate_layout
+    layout = validate_layout(PARTITIONS_CSV)
+    components = [
+        (os.path.join(firmware_dir, f"{SKETCH_NAME}.bootloader.bin"), BUILD_CONFIG["bootloader_offset"]),
+        (os.path.join(firmware_dir, f"{SKETCH_NAME}.partitions.bin"), "0x8000"),
+        (os.path.join(firmware_dir, f"{SKETCH_NAME}.bin"), hex(layout["app0"][2])),
+    ]
+    for path, offset in components:
+        if not verify_flash_against_binary(port, path, offset):
+            return False
+    return True
 
 
 def erase_regions(port: str, erase_mode: str) -> bool:
@@ -2028,6 +2077,12 @@ Un wrapper de projet peut ajouter ses propres commandes.
         "--verify",
         action="store_true",
         help="Verify flashed firmware against local binary (byte-by-byte + SHA256)"
+    )
+
+    parser.add_argument(
+        "--expect-mac",
+        default=None,
+        help="Refuse to flash unless the device reports this MAC (as shown by esptool read-mac)"
     )
 
     # Library management arguments
@@ -2438,12 +2493,13 @@ Un wrapper de projet peut ajouter ses propres commandes.
 
         print_color(f"📦 Firmware: {firmware_file}", "blue")
         print_color(f"SHA256: {calculate_sha256(firmware_file)}", "yellow")
-        if not flash_firmware(port, firmware_file, erase_mode=args.erase):
+        if not flash_firmware(port, firmware_file, erase_mode=args.erase, expect_mac=args.expect_mac):
             sys.exit(1)
 
-        # Verify if requested
+        # Verify if requested: per component, never the merged image (it spans
+        # NVS/LittleFS regions the device rewrites, so it can never match).
         if args.verify:
-            if not verify_flash_against_binary(port, firmware_file, offset="0x0" if firmware_file.endswith(".merged.bin") else hex(validate_layout(PARTITIONS_CSV)["app0"][2])):
+            if not verify_flashed_components(port, firmware_file):
                 sys.exit(1)
 
         # Auto-flash LittleFS if it exists (when using --flash)
@@ -2472,7 +2528,7 @@ Un wrapper de projet peut ajouter ses propres commandes.
                 print_color("\n❌ Cancelled by user", "red")
                 sys.exit(1)
 
-        if not flash_littlefs(port, LITTLEFS_PATH):
+        if not flash_littlefs(port, LITTLEFS_PATH, expect_mac=args.expect_mac):
             sys.exit(1)
 
     # Erase only (if no flash/littlefs)

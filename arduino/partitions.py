@@ -77,4 +77,5 @@ def validate_device(esptool_command,port,csv_path,workdir,check_partition=False)
     if check_partition:
         table=workdir/'device-partitions.bin'
         subprocess.run([*base,'read-flash','0x8000','0x1000',str(table)],check=True,timeout=30)
-        check_table_matches(csv_path,table.read_bytes())
+        data=table.read_bytes()
+        if data.strip(b'\xff'):check_table_matches(csv_path,data)  # blank flash = new device
